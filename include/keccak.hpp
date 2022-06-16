@@ -7,6 +7,10 @@
 // https://github.com/itzmeanjan/merklize-sha/blob/53c339d/include/sha3.hpp
 namespace keccak {
 
+// # -of times keccak-p[400] permutation round function to be applied on state
+// array of dimension 5 x 5 x 16
+constexpr size_t ROUNDS = 20;
+
 // Leftwards circular rotation offset of 24 lanes of state array ( except
 // lane(0, 0), which is not touched ), as provided in table 2 below algorithm 2
 // in section 3.2.2 of http://dx.doi.org/10.6028/NIST.FIPS.202
@@ -21,9 +25,10 @@ constexpr size_t ROT[24] = { 1 & 15,   190 & 15, 28 & 15,  91 & 15,  36 & 15,
 
 // Round constants to be XORed with lane (0, 0) of keccak-p[400] permutation
 // state, see section 3.2.5 of http://dx.doi.org/10.6028/NIST.FIPS.202
-constexpr uint16_t RC[20] = { 1,     32898, 32906, 32768, 32907, 1,     32897,
-                              32777, 138,   136,   32777, 10,    32907, 139,
-                              32905, 32771, 32770, 128,   32778, 10 };
+constexpr uint16_t RC[ROUNDS] = { 1,     32898, 32906, 32768, 32907,
+                                  1,     32897, 32777, 138,   136,
+                                  32777, 10,    32907, 139,   32905,
+                                  32771, 32770, 128,   32778, 10 };
 
 // keccak-p[400] step mapping function `θ`, see specification in section 3.2.1
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
@@ -81,7 +86,7 @@ pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 // keccak-p[400] step mapping function `χ`, see specification in section 3.2.4
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
 inline static void
-χ(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
+chi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 {
   for (size_t y = 0; y < 5; y++) {
     const size_t yoff = y * 5;
@@ -101,6 +106,33 @@ static inline void
 iota(uint16_t* const state, const size_t r_idx)
 {
   state[0] ^= RC[r_idx];
+}
+
+// keccak-p[400] round function, which applies all five
+// step mapping functions in order, updating state array
+//
+// See section 3.3 of http://dx.doi.org/10.6028/NIST.FIPS.202
+static inline void
+round(uint16_t* const state, const size_t r_idx)
+{
+  uint16_t tmp[25];
+
+  theta(state);
+  rho(state);
+  pi(state, tmp);
+  chi(tmp, state);
+  iota(state, r_idx);
+}
+
+// keccak-p[400] permutation, applying n_r ( = 20 ) rounds
+// on state of dimension 5 x 5 x 16, using algorithm 7
+// defined in section 3.3 of http://dx.doi.org/10.6028/NIST.FIPS.202
+static inline void
+permute(uint16_t* const state)
+{
+  for (size_t i = 0; i < ROUNDS; i++) {
+    round(state, i);
+  }
 }
 
 }
