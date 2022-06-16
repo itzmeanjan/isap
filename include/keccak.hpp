@@ -72,4 +72,21 @@ pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
   }
 }
 
+// keccak-p[400] step mapping function `χ`, see specification in section 3.2.4
+// of http://dx.doi.org/10.6028/NIST.FIPS.202
+inline static void
+χ(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
+{
+  for (size_t y = 0; y < 5; y++) {
+    const size_t yoff = y * 5;
+
+    for (size_t x = 0; x < 5; x++) {
+      const size_t x0 = (x + 1) % 5;
+      const size_t x1 = (x + 2) % 5;
+
+      state_out[yoff + x] ^= ~state_in[yoff + x0] & state_in[yoff + x1];
+    }
+  }
+}
+
 }
