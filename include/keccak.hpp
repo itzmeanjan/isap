@@ -60,4 +60,16 @@ rho(uint16_t* const state)
   }
 }
 
+// keccak-p[400] step mapping function `π`, see specification in section 3.2.3
+// of http://dx.doi.org/10.6028/NIST.FIPS.202
+inline static void
+pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
+{
+  for (size_t y = 0; y < 5; y++) {
+    for (size_t x = 0; x < 5; x++) {
+      state_out[y * 5 + x] = state_in[5 * x + (x + 3 * y) % 5];
+    }
+  }
+}
+
 }
