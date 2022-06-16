@@ -2,7 +2,7 @@
 #include "utils.hpp"
 #include <bit>
 
-// Ascon-p Permutation, copied from my previous implementation
+// Ascon-p Permutation, copied from my previous work
 // https://github.com/itzmeanjan/ascon/blob/58a1a1e/include/permutation.hpp
 namespace ascon {
 
