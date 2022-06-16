@@ -19,6 +19,12 @@ constexpr size_t ROT[24] = { 1 & 15,   190 & 15, 28 & 15,  91 & 15,  36 & 15,
                              45 & 15,  15 & 15,  21 & 15,  136 & 15, 210 & 15,
                              66 & 15,  253 & 15, 120 & 15, 78 & 15 };
 
+// Round constants to be XORed with lane (0, 0) of keccak-p[400] permutation
+// state, see section 3.2.5 of http://dx.doi.org/10.6028/NIST.FIPS.202
+constexpr uint16_t RC[20] = { 1,     32898, 32906, 32768, 32907, 1,     32897,
+                              32777, 138,   136,   32777, 10,    32907, 139,
+                              32905, 32771, 32770, 128,   32778, 10 };
+
 // keccak-p[400] step mapping function `θ`, see specification in section 3.2.1
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
 inline static void
@@ -87,6 +93,14 @@ inline static void
       state_out[yoff + x] ^= ~state_in[yoff + x0] & state_in[yoff + x1];
     }
   }
+}
+
+// keccak-p[400] step mapping function `ι`, see specification in section 3.2.5
+// of http://dx.doi.org/10.6028/NIST.FIPS.202
+static inline void
+iota(uint16_t* const state, const size_t r_idx)
+{
+  state[0] ^= RC[r_idx];
 }
 
 }
