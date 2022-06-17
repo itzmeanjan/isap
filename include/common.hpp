@@ -1,5 +1,6 @@
 #pragma once
 #include "ascon.hpp"
+#include <algorithm>
 
 // ISAP AEAD common functions
 namespace isap_common {
@@ -142,6 +143,104 @@ rekeying(const uint8_t* const __restrict key,
     // --- end squeezing ---
 
   } else if constexpr (p == KECCAK) {
+    // not implemented yet !
+  }
+}
+
+// Encrypts/ decrypts N -many message bytes ( producing equal many encrypted/
+// decrypted bytes as output ), using keyed sponge construction in streaming
+// mode, when 128 -bit secret key, 128 -bit public message nonce is provided
+//
+// Read section 2.2 of ISAP specification ( linked below ), then see pseudocode
+// described in algorithm 3 ( named `ISAP_Enc` )
+//
+// ISAP specification:
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
+template<const perm_t p, const size_t s_b, const size_t s_k, const size_t s_e>
+inline static void
+enc(const uint8_t* const __restrict key,
+    const uint8_t* const __restrict nonce,
+    const uint8_t* const __restrict msg,
+    uint8_t* const __restrict out,
+    const size_t mlen)
+{
+  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t rate = slen - (knt_len << 1);
+
+  if constexpr (p == ASCON) {
+    // --- begin initialization ---
+
+    constexpr size_t z = slen - knt_len;
+
+    uint8_t skey[z];
+    rekeying<p, ENC, s_b, s_k>(key, nonce, skey);
+
+    uint64_t state[5];
+
+    state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
+               (static_cast<uint64_t>(skey[1]) << 48) |
+               (static_cast<uint64_t>(skey[2]) << 40) |
+               (static_cast<uint64_t>(skey[3]) << 32) |
+               (static_cast<uint64_t>(skey[4]) << 24) |
+               (static_cast<uint64_t>(skey[5]) << 16) |
+               (static_cast<uint64_t>(skey[6]) << 8) |
+               (static_cast<uint64_t>(skey[7]) << 0);
+
+    state[1] = (static_cast<uint64_t>(skey[8]) << 56) |
+               (static_cast<uint64_t>(skey[9]) << 48) |
+               (static_cast<uint64_t>(skey[10]) << 40) |
+               (static_cast<uint64_t>(skey[11]) << 32) |
+               (static_cast<uint64_t>(skey[12]) << 24) |
+               (static_cast<uint64_t>(skey[13]) << 16) |
+               (static_cast<uint64_t>(skey[14]) << 8) |
+               (static_cast<uint64_t>(skey[15]) << 0);
+
+    state[2] = (static_cast<uint64_t>(skey[16]) << 56) |
+               (static_cast<uint64_t>(skey[17]) << 48) |
+               (static_cast<uint64_t>(skey[18]) << 40) |
+               (static_cast<uint64_t>(skey[19]) << 32) |
+               (static_cast<uint64_t>(skey[20]) << 24) |
+               (static_cast<uint64_t>(skey[21]) << 16) |
+               (static_cast<uint64_t>(skey[22]) << 8) |
+               (static_cast<uint64_t>(skey[23]) << 0);
+
+    state[3] = (static_cast<uint64_t>(nonce[0]) << 56) |
+               (static_cast<uint64_t>(nonce[1]) << 48) |
+               (static_cast<uint64_t>(nonce[2]) << 40) |
+               (static_cast<uint64_t>(nonce[3]) << 32) |
+               (static_cast<uint64_t>(nonce[4]) << 24) |
+               (static_cast<uint64_t>(nonce[5]) << 16) |
+               (static_cast<uint64_t>(nonce[6]) << 8) |
+               (static_cast<uint64_t>(nonce[7]) << 0);
+
+    state[4] = (static_cast<uint64_t>(nonce[8]) << 56) |
+               (static_cast<uint64_t>(nonce[9]) << 48) |
+               (static_cast<uint64_t>(nonce[10]) << 40) |
+               (static_cast<uint64_t>(nonce[11]) << 32) |
+               (static_cast<uint64_t>(nonce[12]) << 24) |
+               (static_cast<uint64_t>(nonce[13]) << 16) |
+               (static_cast<uint64_t>(nonce[14]) << 8) |
+               (static_cast<uint64_t>(nonce[15]) << 0);
+
+    // --- end initialization ---
+
+    // --- begin squeezing ---
+
+    for (size_t off = 0; off < mlen; off += rate) {
+      ascon::permute<s_e>(state);
+
+      const size_t elen = std::min(rate, mlen - off);
+      for (size_t j = 0; j < elen; j++) {
+        const size_t boff = (7 - j) << 3;
+        const uint8_t b = static_cast<uint8_t>(state[0] >> boff);
+
+        out[off + j] = msg[off + j] ^ b;
+      }
+    }
+
+    // --- end squeezing ---
+
+  } else if (p == KECCAK) {
     // not implemented yet !
   }
 }
