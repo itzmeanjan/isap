@@ -245,4 +245,203 @@ enc(const uint8_t* const __restrict key,
   }
 }
 
+// Computes 128 -bit suffix-MAC ( message authentication code ), using sponge
+// based hash function, used for message authentication purpose, given 128 -bit
+// secret key, 128 -bit public message nonce, N -bytes associated data & M
+// -bytes cipher text
+//
+// Read section 2.3 of ISAP specification ( linked below ), then see pseudocode
+// described in algorithm 5 ( named `ISAP_Mac` )
+//
+// ISAP specification:
+// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
+template<const perm_t p, const size_t s_b, const size_t s_k, const size_t s_h>
+inline static void
+mac(const uint8_t* const __restrict key,
+    const uint8_t* const __restrict nonce,
+    const uint8_t* const __restrict data,
+    const size_t dlen,
+    const uint8_t* const __restrict cipher,
+    const size_t clen,
+    uint8_t* const __restrict tag)
+{
+  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t rate = slen - (knt_len << 1);
+  constexpr uint8_t seperator = 0b10000000;
+
+  if constexpr (p == ASCON) {
+    // --- begin initialization ---
+
+    uint64_t state[5];
+
+    state[0] = (static_cast<uint64_t>(nonce[0]) << 56) |
+               (static_cast<uint64_t>(nonce[1]) << 48) |
+               (static_cast<uint64_t>(nonce[2]) << 40) |
+               (static_cast<uint64_t>(nonce[3]) << 32) |
+               (static_cast<uint64_t>(nonce[4]) << 24) |
+               (static_cast<uint64_t>(nonce[5]) << 16) |
+               (static_cast<uint64_t>(nonce[6]) << 8) |
+               (static_cast<uint64_t>(nonce[7]) << 0);
+
+    state[1] = (static_cast<uint64_t>(nonce[8]) << 56) |
+               (static_cast<uint64_t>(nonce[9]) << 48) |
+               (static_cast<uint64_t>(nonce[10]) << 40) |
+               (static_cast<uint64_t>(nonce[11]) << 32) |
+               (static_cast<uint64_t>(nonce[12]) << 24) |
+               (static_cast<uint64_t>(nonce[13]) << 16) |
+               (static_cast<uint64_t>(nonce[14]) << 8) |
+               (static_cast<uint64_t>(nonce[15]) << 0);
+
+    state[2] = (static_cast<uint64_t>(IV_A[0]) << 56) |
+               (static_cast<uint64_t>(IV_A[1]) << 48) |
+               (static_cast<uint64_t>(IV_A[2]) << 40) |
+               (static_cast<uint64_t>(IV_A[3]) << 32) |
+               (static_cast<uint64_t>(IV_A[4]) << 24) |
+               (static_cast<uint64_t>(IV_A[5]) << 16) |
+               (static_cast<uint64_t>(IV_A[6]) << 8) |
+               (static_cast<uint64_t>(IV_A[7]) << 0);
+
+    state[3] = 0ul;
+    state[4] = 0ul;
+
+    ascon::permute<s_h>(state);
+
+    // --- end initialization ---
+
+    // --- begin absorbing associated data ---
+    {
+      const size_t blk_cnt = dlen / rate;
+      const size_t rm_bytes = dlen % rate;
+
+      for (size_t i = 0; i < blk_cnt; i++) {
+        const size_t off = i * rate;
+        const uint64_t w = (static_cast<uint64_t>(data[off + 0]) << 56) |
+                           (static_cast<uint64_t>(data[off + 1]) << 48) |
+                           (static_cast<uint64_t>(data[off + 2]) << 40) |
+                           (static_cast<uint64_t>(data[off + 3]) << 32) |
+                           (static_cast<uint64_t>(data[off + 4]) << 24) |
+                           (static_cast<uint64_t>(data[off + 5]) << 16) |
+                           (static_cast<uint64_t>(data[off + 6]) << 8) |
+                           (static_cast<uint64_t>(data[off + 7]) << 0);
+
+        state[0] ^= w;
+        ascon::permute<s_h>(state);
+      }
+
+      const size_t off = blk_cnt * rate;
+      uint64_t w = static_cast<uint64_t>(seperator) << ((7 - rm_bytes) << 3);
+
+      for (size_t i = 0; i < rm_bytes; i++) {
+        w |= static_cast<uint64_t>(data[off + i]) << ((7 - i) << 3);
+      }
+
+      state[0] ^= w;
+      ascon::permute<s_h>(state);
+
+      state[4] ^= 0b1; // seperator between associated data & cipher text
+    }
+    // --- end absorbing associated data ---
+
+    // --- begin absorbing cipher text ---
+    {
+      const size_t blk_cnt = dlen / rate;
+      const size_t rm_bytes = dlen % rate;
+
+      for (size_t i = 0; i < blk_cnt; i++) {
+        const size_t off = i * rate;
+        const uint64_t w = (static_cast<uint64_t>(cipher[off + 0]) << 56) |
+                           (static_cast<uint64_t>(cipher[off + 1]) << 48) |
+                           (static_cast<uint64_t>(cipher[off + 2]) << 40) |
+                           (static_cast<uint64_t>(cipher[off + 3]) << 32) |
+                           (static_cast<uint64_t>(cipher[off + 4]) << 24) |
+                           (static_cast<uint64_t>(cipher[off + 5]) << 16) |
+                           (static_cast<uint64_t>(cipher[off + 6]) << 8) |
+                           (static_cast<uint64_t>(cipher[off + 7]) << 0);
+
+        state[0] ^= w;
+        ascon::permute<s_h>(state);
+      }
+
+      const size_t off = blk_cnt * rate;
+      uint64_t w = static_cast<uint64_t>(seperator) << ((7 - rm_bytes) << 3);
+
+      for (size_t i = 0; i < rm_bytes; i++) {
+        w |= static_cast<uint64_t>(cipher[off + i]) << ((7 - i) << 3);
+      }
+
+      state[0] ^= w;
+      ascon::permute<s_h>(state);
+    }
+    // --- end absorbing cipher text ---
+
+    // --- begin squeezing tag ---
+
+    uint8_t y[knt_len];
+    uint8_t skey[knt_len];
+
+    y[0] = static_cast<uint8_t>(state[0] >> 56);
+    y[1] = static_cast<uint8_t>(state[0] >> 48);
+    y[2] = static_cast<uint8_t>(state[0] >> 40);
+    y[3] = static_cast<uint8_t>(state[0] >> 32);
+    y[4] = static_cast<uint8_t>(state[0] >> 24);
+    y[5] = static_cast<uint8_t>(state[0] >> 16);
+    y[6] = static_cast<uint8_t>(state[0] >> 8);
+    y[7] = static_cast<uint8_t>(state[0] >> 0);
+
+    y[8] = static_cast<uint8_t>(state[1] >> 56);
+    y[9] = static_cast<uint8_t>(state[1] >> 48);
+    y[10] = static_cast<uint8_t>(state[1] >> 40);
+    y[11] = static_cast<uint8_t>(state[1] >> 32);
+    y[12] = static_cast<uint8_t>(state[1] >> 24);
+    y[13] = static_cast<uint8_t>(state[1] >> 16);
+    y[14] = static_cast<uint8_t>(state[1] >> 8);
+    y[15] = static_cast<uint8_t>(state[1] >> 0);
+
+    rekeying<p, MAC, s_b, s_k>(key, y, skey);
+
+    state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
+               (static_cast<uint64_t>(skey[1]) << 48) |
+               (static_cast<uint64_t>(skey[2]) << 40) |
+               (static_cast<uint64_t>(skey[3]) << 32) |
+               (static_cast<uint64_t>(skey[4]) << 24) |
+               (static_cast<uint64_t>(skey[5]) << 16) |
+               (static_cast<uint64_t>(skey[6]) << 8) |
+               (static_cast<uint64_t>(skey[7]) << 0);
+
+    state[1] = (static_cast<uint64_t>(skey[8]) << 56) |
+               (static_cast<uint64_t>(skey[9]) << 48) |
+               (static_cast<uint64_t>(skey[10]) << 40) |
+               (static_cast<uint64_t>(skey[11]) << 32) |
+               (static_cast<uint64_t>(skey[12]) << 24) |
+               (static_cast<uint64_t>(skey[13]) << 16) |
+               (static_cast<uint64_t>(skey[14]) << 8) |
+               (static_cast<uint64_t>(skey[15]) << 0);
+
+    ascon::permute<s_h>(state);
+
+    tag[0] = static_cast<uint8_t>(state[0] >> 56);
+    tag[1] = static_cast<uint8_t>(state[0] >> 48);
+    tag[2] = static_cast<uint8_t>(state[0] >> 40);
+    tag[3] = static_cast<uint8_t>(state[0] >> 32);
+    tag[4] = static_cast<uint8_t>(state[0] >> 24);
+    tag[5] = static_cast<uint8_t>(state[0] >> 16);
+    tag[6] = static_cast<uint8_t>(state[0] >> 8);
+    tag[7] = static_cast<uint8_t>(state[0] >> 0);
+
+    tag[8] = static_cast<uint8_t>(state[1] >> 56);
+    tag[9] = static_cast<uint8_t>(state[1] >> 48);
+    tag[10] = static_cast<uint8_t>(state[1] >> 40);
+    tag[11] = static_cast<uint8_t>(state[1] >> 32);
+    tag[12] = static_cast<uint8_t>(state[1] >> 24);
+    tag[13] = static_cast<uint8_t>(state[1] >> 16);
+    tag[14] = static_cast<uint8_t>(state[1] >> 8);
+    tag[15] = static_cast<uint8_t>(state[1] >> 0);
+
+    // --- end squeezing tag ---
+
+  } else if (p == KECCAK) {
+    // not implemented yet !
+  }
+}
+
 }
