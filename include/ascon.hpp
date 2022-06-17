@@ -67,37 +67,16 @@ p_l(uint64_t* const state)
 
 // Ascon permutation; taken from appendix A of ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
+template<const size_t ROUNDS>
 inline static void
-permute(uint64_t* const state, const size_t c_idx)
+permute(uint64_t* const state, const size_t c_idx) requires(check_lt_12(ROUNDS))
 {
-  p_c(state, c_idx);
-  p_s(state);
-  p_l(state);
-}
+  constexpr size_t beg = 12 - ROUNDS;
 
-// Permutation `p_a` to be sequentially applied on state for `a` -many
-// times | a = 12; taken from appendix A of ISAP specification
-// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-template<const size_t a>
-inline static void
-p_a(uint64_t* const state) requires(check_12(a))
-{
-  for (size_t i = 0; i < a; i++) {
-    permute(state, i);
-  }
-}
-
-// Permutation `p_b` to be sequentially applied on state for `b` -many
-// times | b ∈ {6, 8, 12}; taken from appendix A of ISAP specification
-// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-template<const size_t b>
-inline static void
-p_b(uint64_t* const state) requires(check_6(b) || check_8(b) || check_12(b))
-{
-  constexpr size_t a = 12;
-
-  for (size_t i = a - b; i < a; i++) {
-    permute(state, i);
+  for (size_t i = beg; i < 12; i++) {
+    p_c(state, i);
+    p_s(state);
+    p_l(state);
   }
 }
 
