@@ -69,7 +69,7 @@ p_l(uint64_t* const state)
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
 template<const size_t ROUNDS>
 inline static void
-permute(uint64_t* const state, const size_t c_idx) requires(check_lt_12(ROUNDS))
+permute(uint64_t* const state) requires(check_lt_12(ROUNDS))
 {
   constexpr size_t beg = 12 - ROUNDS;
 
