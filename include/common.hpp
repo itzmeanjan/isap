@@ -115,17 +115,17 @@ rekeying(const uint8_t* const __restrict key,
     constexpr size_t bits = (knt_len << 3) - 1;
 
     for (size_t i = 0; i < bits; i++) {
-      const size_t off = i >> 3; // byte offset
-      const size_t bpos = i & 7; // bit position in selected byte
+      const size_t off = i >> 3;       // byte offset
+      const size_t bpos = 7 - (i & 7); // bit position in selected byte
 
       const uint8_t bit = (y[off] >> bpos) & 0b1;
-      state[0] ^= static_cast<uint64_t>(bit) << 56;
+      state[0] ^= static_cast<uint64_t>(bit) << 63;
 
       ascon::permute<s_b>(state);
     }
 
-    const uint8_t bit = (y[15] >> 7) & 0b1;
-    state[0] ^= static_cast<uint64_t>(bit) << 56;
+    const uint8_t bit = y[15] & 0b1;
+    state[0] ^= static_cast<uint64_t>(bit) << 63;
 
     ascon::permute<s_k>(state);
 
@@ -344,8 +344,8 @@ mac(const uint8_t* const __restrict key,
 
     // --- begin absorbing cipher text ---
     {
-      const size_t blk_cnt = dlen / rate;
-      const size_t rm_bytes = dlen % rate;
+      const size_t blk_cnt = clen / rate;
+      const size_t rm_bytes = clen % rate;
 
       for (size_t i = 0; i < blk_cnt; i++) {
         const size_t off = i * rate;
