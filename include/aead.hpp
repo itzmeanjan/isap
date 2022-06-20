@@ -36,8 +36,8 @@ encrypt(const uint8_t* const __restrict key,
 
 // Given 16 -bytes secret key, 16 -bytes public message nonce, 16 -bytes
 // authentication tag, N ( >=0 ) -bytes associated data, M ( >=0 ) -bytes cipher
-// text, this routine decrypts M -bytes plain text along with boolean
-// verification flag, using any of these four decryption algorithms
+// text, this routine decrypts M -bytes plain text along with producing a
+// boolean verification flag, using any of these four decryption algorithms
 // {Isap-A-128a, Isap-A-128, Isap-K-128a, Isap-K-128}.
 //
 // Which specific algorithm from ISAP specification to be used, depends on
