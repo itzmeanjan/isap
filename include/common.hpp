@@ -28,18 +28,6 @@ constexpr size_t PERM_STATE_LEN[] = { 40, 50 };
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
 constexpr size_t knt_len = 16;
 
-// Initial value `IVa` of ISAP-A-128A, see table 2.3 of
-// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr uint8_t IV_A[8] = { 0x01, 0x80, 0x40, 0x01, 0x0c, 0x01, 0x06, 0x0c };
-
-// Initial value `IVka` of ISAP-A-128A, see table 2.3 of
-// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr uint8_t IV_KA[8] = { 0x02, 0x80, 0x40, 0x01, 0x0c, 0x01, 0x06, 0x0c };
-
-// Initial value `IVke` of ISAP-A-128A, see table 2.3 of
-// https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr uint8_t IV_KE[8] = { 0x03, 0x80, 0x40, 0x01, 0x0c, 0x01, 0x06, 0x0c };
-
 // Generates session key `Ke` for encryption & `Ka` for authentication, given
 // 128 -bit secret key, 128 -bit string Y & a flag denoting encryption/
 // authentication mode
@@ -49,16 +37,30 @@ constexpr uint8_t IV_KE[8] = { 0x03, 0x80, 0x40, 0x01, 0x0c, 0x01, 0x06, 0x0c };
 //
 // ISAP specification:
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-template<const perm_t p, const rk_flag_t f, const size_t s_b, const size_t s_k>
+template<const perm_t p,
+         const rk_flag_t f,
+         const size_t s_b,
+         const size_t s_k,
+         const size_t s_e,
+         const size_t s_h>
 inline static void
 rekeying(const uint8_t* const __restrict key,
          const uint8_t* const __restrict y,
          uint8_t* const __restrict skey)
 {
   constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t rate = slen - (knt_len << 1);
 
   constexpr size_t Z[] = { slen - knt_len, knt_len };
   constexpr size_t z = Z[f];
+
+  // See table 2.3 of ISAP specification
+  constexpr uint8_t IV_KA[8] = { 0x02, knt_len << 3, rate << 3, 0x01,
+                                 s_h,  s_b,          s_e,       s_k };
+
+  // See table 2.3 of ISAP specification
+  constexpr uint8_t IV_KE[8] = { 0x03, knt_len << 3, rate << 3, 0x01,
+                                 s_h,  s_b,          s_e,       s_k };
 
   if constexpr (p == ASCON) {
     // --- begin initialization ---
@@ -156,7 +158,11 @@ rekeying(const uint8_t* const __restrict key,
 //
 // ISAP specification:
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-template<const perm_t p, const size_t s_b, const size_t s_k, const size_t s_e>
+template<const perm_t p,
+         const size_t s_b,
+         const size_t s_k,
+         const size_t s_e,
+         const size_t s_h>
 inline static void
 enc(const uint8_t* const __restrict key,
     const uint8_t* const __restrict nonce,
@@ -173,7 +179,7 @@ enc(const uint8_t* const __restrict key,
     constexpr size_t z = slen - knt_len;
 
     uint8_t skey[z];
-    rekeying<p, ENC, s_b, s_k>(key, nonce, skey);
+    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint64_t state[5];
 
@@ -255,7 +261,11 @@ enc(const uint8_t* const __restrict key,
 //
 // ISAP specification:
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-template<const perm_t p, const size_t s_b, const size_t s_k, const size_t s_h>
+template<const perm_t p,
+         const size_t s_b,
+         const size_t s_k,
+         const size_t s_e,
+         const size_t s_h>
 inline static void
 mac(const uint8_t* const __restrict key,
     const uint8_t* const __restrict nonce,
@@ -268,6 +278,10 @@ mac(const uint8_t* const __restrict key,
   constexpr size_t slen = PERM_STATE_LEN[p];
   constexpr size_t rate = slen - (knt_len << 1);
   constexpr uint8_t seperator = 0b10000000;
+
+  // See table 2.3 of ISAP specification
+  constexpr uint8_t IV_A[8] = { 0x01, knt_len << 3, rate << 3, 0x01,
+                                s_h,  s_b,          s_e,       s_k };
 
   if constexpr (p == ASCON) {
     // --- begin initialization ---
@@ -397,7 +411,7 @@ mac(const uint8_t* const __restrict key,
     y[14] = static_cast<uint8_t>(state[1] >> 8);
     y[15] = static_cast<uint8_t>(state[1] >> 0);
 
-    rekeying<p, MAC, s_b, s_k>(key, y, skey);
+    rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
 
     state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
                (static_cast<uint64_t>(skey[1]) << 48) |

@@ -26,12 +26,14 @@ encrypt(const uint8_t* const __restrict key,
         const uint8_t* const __restrict data,
         const size_t dlen,
         const uint8_t* const __restrict msg,
-        uint8_t* const __restrict enc,
+        uint8_t* const __restrict cipher,
         const size_t mlen,
         uint8_t* const __restrict tag)
 {
-  isap_common::enc<p, s_b, s_k, s_e>(key, nonce, msg, enc, mlen);
-  isap_common::mac<p, s_b, s_k, s_h>(key, nonce, data, dlen, enc, mlen, tag);
+  using namespace isap_common;
+
+  enc<p, s_b, s_k, s_e, s_h>(key, nonce, msg, cipher, mlen);
+  mac<p, s_b, s_k, s_e, s_h>(key, nonce, data, dlen, cipher, mlen, tag);
 }
 
 // Given 16 -bytes secret key, 16 -bytes public message nonce, 16 -bytes
@@ -60,13 +62,14 @@ decrypt(const uint8_t* const __restrict key,
         const uint8_t* const __restrict tag,
         const uint8_t* const __restrict data,
         const size_t dlen,
-        const uint8_t* const __restrict enc,
+        const uint8_t* const __restrict cipher,
         uint8_t* const __restrict msg,
         const size_t mlen)
 {
+  using namespace isap_common;
   uint8_t tag_[16];
 
-  isap_common::mac<p, s_b, s_k, s_h>(key, nonce, data, dlen, enc, mlen, tag_);
+  mac<p, s_b, s_k, s_e, s_h>(key, nonce, data, dlen, cipher, mlen, tag_);
 
   bool flg = false;
   for (size_t i = 0; i < 16; i++) {
@@ -77,7 +80,7 @@ decrypt(const uint8_t* const __restrict key,
     return !flg;
   }
 
-  isap_common::enc<p, s_b, s_k, s_e>(key, nonce, enc, msg, mlen);
+  enc<p, s_b, s_k, s_e, s_h>(key, nonce, cipher, msg, mlen);
   return !flg;
 }
 
