@@ -325,7 +325,86 @@ enc(const uint8_t* const __restrict key,
     // --- end squeezing ---
 
   } else if (p == KECCAK) {
-    // not implemented yet !
+    // --- begin initialization ---
+
+    constexpr size_t z = slen - knt_len;
+
+    uint8_t skey[z];
+    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
+
+    uint16_t state[25];
+
+    state[0] = (static_cast<uint16_t>(skey[1]) << 8) |
+               (static_cast<uint16_t>(skey[0]) << 0);
+    state[1] = (static_cast<uint16_t>(skey[3]) << 8) |
+               (static_cast<uint16_t>(skey[2]) << 0);
+    state[2] = (static_cast<uint16_t>(skey[5]) << 8) |
+               (static_cast<uint16_t>(skey[4]) << 0);
+    state[3] = (static_cast<uint16_t>(skey[7]) << 8) |
+               (static_cast<uint16_t>(skey[6]) << 0);
+    state[4] = (static_cast<uint16_t>(skey[9]) << 8) |
+               (static_cast<uint16_t>(skey[8]) << 0);
+    state[5] = (static_cast<uint16_t>(skey[11]) << 8) |
+               (static_cast<uint16_t>(skey[10]) << 0);
+    state[6] = (static_cast<uint16_t>(skey[13]) << 8) |
+               (static_cast<uint16_t>(skey[12]) << 0);
+    state[7] = (static_cast<uint16_t>(skey[15]) << 8) |
+               (static_cast<uint16_t>(skey[14]) << 0);
+    state[8] = (static_cast<uint16_t>(skey[17]) << 8) |
+               (static_cast<uint16_t>(skey[16]) << 0);
+    state[9] = (static_cast<uint16_t>(skey[19]) << 8) |
+               (static_cast<uint16_t>(skey[18]) << 0);
+    state[10] = (static_cast<uint16_t>(skey[21]) << 8) |
+                (static_cast<uint16_t>(skey[20]) << 0);
+    state[11] = (static_cast<uint16_t>(skey[23]) << 8) |
+                (static_cast<uint16_t>(skey[22]) << 0);
+    state[12] = (static_cast<uint16_t>(skey[25]) << 8) |
+                (static_cast<uint16_t>(skey[24]) << 0);
+    state[13] = (static_cast<uint16_t>(skey[27]) << 8) |
+                (static_cast<uint16_t>(skey[26]) << 0);
+    state[14] = (static_cast<uint16_t>(skey[29]) << 8) |
+                (static_cast<uint16_t>(skey[28]) << 0);
+    state[15] = (static_cast<uint16_t>(skey[31]) << 8) |
+                (static_cast<uint16_t>(skey[30]) << 0);
+    state[16] = (static_cast<uint16_t>(skey[33]) << 8) |
+                (static_cast<uint16_t>(skey[32]) << 0);
+
+    state[17] = (static_cast<uint16_t>(nonce[1]) << 8) |
+                (static_cast<uint16_t>(nonce[0]) << 0);
+    state[18] = (static_cast<uint16_t>(nonce[3]) << 8) |
+                (static_cast<uint16_t>(nonce[2]) << 0);
+    state[19] = (static_cast<uint16_t>(nonce[5]) << 8) |
+                (static_cast<uint16_t>(nonce[4]) << 0);
+    state[20] = (static_cast<uint16_t>(nonce[7]) << 8) |
+                (static_cast<uint16_t>(nonce[6]) << 0);
+    state[21] = (static_cast<uint16_t>(nonce[9]) << 8) |
+                (static_cast<uint16_t>(nonce[8]) << 0);
+    state[22] = (static_cast<uint16_t>(nonce[11]) << 8) |
+                (static_cast<uint16_t>(nonce[10]) << 0);
+    state[23] = (static_cast<uint16_t>(nonce[13]) << 8) |
+                (static_cast<uint16_t>(nonce[12]) << 0);
+    state[24] = (static_cast<uint16_t>(nonce[15]) << 8) |
+                (static_cast<uint16_t>(nonce[14]) << 0);
+
+    // --- end initialization ---
+
+    // --- begin squeezing ---
+
+    for (size_t off = 0; off < mlen; off += rate) {
+      keccak::permute<s_e>(state);
+
+      const size_t elen = std::min(rate, mlen - off);
+      for (size_t j = 0; j < elen; j++) {
+        const size_t soff = j >> 1;
+        const size_t boff = (j & 1) << 3;
+
+        const uint8_t b = static_cast<uint8_t>(state[soff] >> boff);
+
+        out[off + j] = msg[off + j] ^ b;
+      }
+    }
+
+    // --- end squeezing ---
   }
 }
 
