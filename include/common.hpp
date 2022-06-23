@@ -2,7 +2,6 @@
 #include "ascon.hpp"
 #include "keccak.hpp"
 #include <algorithm>
-#include <iostream>
 
 // ISAP AEAD common functions
 namespace isap_common {
