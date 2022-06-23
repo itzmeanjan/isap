@@ -2,6 +2,7 @@
 #include "ascon.hpp"
 #include "keccak.hpp"
 #include <algorithm>
+#include <iostream>
 
 // ISAP AEAD common functions
 namespace isap_common {
@@ -148,46 +149,34 @@ rekeying(const uint8_t* const __restrict key,
   } else if constexpr (p == KECCAK) {
     // --- begin initialization ---
 
-    uint16_t state[25];
+    uint16_t state[25] = {};
 
-    state[0] = (static_cast<uint16_t>(key[1]) << 8) |
-               (static_cast<uint16_t>(key[0]) << 0);
-    state[1] = (static_cast<uint16_t>(key[3]) << 8) |
-               (static_cast<uint16_t>(key[2]) << 0);
-    state[2] = (static_cast<uint16_t>(key[5]) << 8) |
-               (static_cast<uint16_t>(key[4]) << 0);
-    state[3] = (static_cast<uint16_t>(key[7]) << 8) |
-               (static_cast<uint16_t>(key[6]) << 0);
-    state[4] = (static_cast<uint16_t>(key[9]) << 8) |
-               (static_cast<uint16_t>(key[8]) << 0);
-    state[5] = (static_cast<uint16_t>(key[11]) << 8) |
-               (static_cast<uint16_t>(key[10]) << 0);
-    state[6] = (static_cast<uint16_t>(key[13]) << 8) |
-               (static_cast<uint16_t>(key[12]) << 0);
-    state[7] = (static_cast<uint16_t>(key[15]) << 8) |
-               (static_cast<uint16_t>(key[14]) << 0);
+    for (size_t i = 0; i < 8; i++) {
+      const size_t koff = i << 1;
 
-    if constexpr (f == ENC) {
-      state[8] = (static_cast<uint16_t>(IV_KE[1]) << 8) |
-                 (static_cast<uint16_t>(IV_KE[0]) << 0);
-      state[9] = (static_cast<uint16_t>(IV_KE[3]) << 8) |
-                 (static_cast<uint16_t>(IV_KE[2]) << 0);
-      state[10] = (static_cast<uint16_t>(IV_KE[5]) << 8) |
-                  (static_cast<uint16_t>(IV_KE[4]) << 0);
-      state[11] = (static_cast<uint16_t>(IV_KE[7]) << 8) |
-                  (static_cast<uint16_t>(IV_KE[6]) << 0);
-    } else if constexpr (f == MAC) {
-      state[8] = (static_cast<uint16_t>(IV_KA[1]) << 8) |
-                 (static_cast<uint16_t>(IV_KA[0]) << 0);
-      state[9] = (static_cast<uint16_t>(IV_KA[3]) << 8) |
-                 (static_cast<uint16_t>(IV_KA[2]) << 0);
-      state[10] = (static_cast<uint16_t>(IV_KA[5]) << 8) |
-                  (static_cast<uint16_t>(IV_KA[4]) << 0);
-      state[11] = (static_cast<uint16_t>(IV_KA[7]) << 8) |
-                  (static_cast<uint16_t>(IV_KA[6]) << 0);
+      state[i] = (static_cast<uint16_t>(key[koff ^ 1]) << 8) |
+                 (static_cast<uint16_t>(key[koff ^ 0]) << 0);
     }
 
-    std::memset(state + 12, 0, slen - 24);
+    if constexpr (f == ENC) {
+      constexpr size_t soff = 8;
+
+      for (size_t i = 0; i < 4; i++) {
+        const size_t ivoff = i << 1;
+
+        state[soff + i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
+                          (static_cast<uint16_t>(IV_KE[ivoff ^ 0]) << 0);
+      }
+    } else if constexpr (f == MAC) {
+      constexpr size_t soff = 8;
+
+      for (size_t i = 0; i < 4; i++) {
+        const size_t ivoff = i << 1;
+
+        state[soff + i] = (static_cast<uint16_t>(IV_KA[ivoff ^ 1]) << 8) |
+                          (static_cast<uint16_t>(IV_KA[ivoff ^ 0]) << 0);
+      }
+    }
 
     keccak::permute<s_k>(state);
 
@@ -202,13 +191,13 @@ rekeying(const uint8_t* const __restrict key,
       const size_t bpos = 7 - (i & 7); // bit position in selected byte
 
       const uint8_t bit = (y[off] >> bpos) & 0b1;
-      state[0] ^= static_cast<uint16_t>(bit) << 15;
+      state[0] ^= static_cast<uint16_t>(bit) << 7;
 
       keccak::permute<s_b>(state);
     }
 
     const uint8_t bit = y[15] & 0b1;
-    state[0] ^= static_cast<uint16_t>(bit) << 15;
+    state[0] ^= static_cast<uint16_t>(bit) << 7;
 
     keccak::permute<s_k>(state);
 
@@ -613,7 +602,7 @@ mac(const uint8_t* const __restrict key,
   } else if (p == KECCAK) {
     // --- begin initialization ---
 
-    uint16_t state[25];
+    uint16_t state[25] = {};
 
     state[0] = (static_cast<uint16_t>(nonce[1]) << 8) |
                (static_cast<uint16_t>(nonce[0]) << 0);
@@ -639,8 +628,6 @@ mac(const uint8_t* const __restrict key,
                 (static_cast<uint16_t>(IV_A[4]) << 0);
     state[11] = (static_cast<uint16_t>(IV_A[7]) << 8) |
                 (static_cast<uint16_t>(IV_A[6]) << 0);
-
-    std::memset(state + 12, 0, slen - 24);
 
     keccak::permute<s_h>(state);
 
