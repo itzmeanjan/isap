@@ -330,7 +330,7 @@ enc(const uint8_t* const __restrict key,
                     (static_cast<uint16_t>(skey[i + 0]) << 0);
     }
 
-    const size_t soff = z >> 1;
+    constexpr size_t soff = z >> 1;
     for (size_t i = 0; i < 8; i++) {
       const size_t noff = i << 1;
 
@@ -567,30 +567,20 @@ mac(const uint8_t* const __restrict key,
 
     uint16_t state[25] = {};
 
-    state[0] = (static_cast<uint16_t>(nonce[1]) << 8) |
-               (static_cast<uint16_t>(nonce[0]) << 0);
-    state[1] = (static_cast<uint16_t>(nonce[3]) << 8) |
-               (static_cast<uint16_t>(nonce[2]) << 0);
-    state[2] = (static_cast<uint16_t>(nonce[5]) << 8) |
-               (static_cast<uint16_t>(nonce[4]) << 0);
-    state[3] = (static_cast<uint16_t>(nonce[7]) << 8) |
-               (static_cast<uint16_t>(nonce[6]) << 0);
-    state[4] = (static_cast<uint16_t>(nonce[9]) << 8) |
-               (static_cast<uint16_t>(nonce[8]) << 0);
-    state[5] = (static_cast<uint16_t>(nonce[11]) << 8) |
-               (static_cast<uint16_t>(nonce[10]) << 0);
-    state[6] = (static_cast<uint16_t>(nonce[13]) << 8) |
-               (static_cast<uint16_t>(nonce[12]) << 0);
-    state[7] = (static_cast<uint16_t>(nonce[15]) << 8) |
-               (static_cast<uint16_t>(nonce[14]) << 0);
-    state[8] = (static_cast<uint16_t>(IV_A[1]) << 8) |
-               (static_cast<uint16_t>(IV_A[0]) << 0);
-    state[9] = (static_cast<uint16_t>(IV_A[3]) << 8) |
-               (static_cast<uint16_t>(IV_A[2]) << 0);
-    state[10] = (static_cast<uint16_t>(IV_A[5]) << 8) |
-                (static_cast<uint16_t>(IV_A[4]) << 0);
-    state[11] = (static_cast<uint16_t>(IV_A[7]) << 8) |
-                (static_cast<uint16_t>(IV_A[6]) << 0);
+    for (size_t i = 0; i < 8; i++) {
+      const size_t noff = i << 1;
+
+      state[i] = (static_cast<uint16_t>(nonce[noff ^ 1]) << 8) |
+                 (static_cast<uint16_t>(nonce[noff ^ 0]) << 0);
+    }
+
+    constexpr size_t soff = 8;
+    for (size_t i = 0; i < 4; i++) {
+      const size_t ivoff = i << 1;
+
+      state[soff + i] = (static_cast<uint16_t>(IV_A[ivoff ^ 1]) << 8) |
+                        (static_cast<uint16_t>(IV_A[ivoff ^ 0]) << 0);
+    }
 
     keccak::permute<s_h>(state);
 
@@ -605,10 +595,11 @@ mac(const uint8_t* const __restrict key,
         const size_t off = i * rate;
 
         for (size_t j = 0; j < rate; j += 2) {
+          const size_t soff = j >> 1;
           const uint16_t w = (static_cast<uint16_t>(data[off + j + 1]) << 8) |
                              (static_cast<uint16_t>(data[off + j + 0]) << 0);
 
-          state[j >> 1] ^= w;
+          state[soff] ^= w;
         }
 
         keccak::permute<s_h>(state);
@@ -633,7 +624,7 @@ mac(const uint8_t* const __restrict key,
       state[soff] ^= w;
       keccak::permute<s_h>(state);
 
-      state[24] ^= 0b1; // seperator between associated data & cipher text
+      state[24] ^= 0b1 << 8; // seperator between associated data & cipher text
     }
     // --- end absorbing associated data ---
 
@@ -682,60 +673,24 @@ mac(const uint8_t* const __restrict key,
     uint8_t y[knt_len];
     uint8_t skey[knt_len];
 
-    y[0] = static_cast<uint8_t>(state[0] >> 0);
-    y[1] = static_cast<uint8_t>(state[0] >> 8);
-    y[2] = static_cast<uint8_t>(state[1] >> 0);
-    y[3] = static_cast<uint8_t>(state[1] >> 8);
-    y[4] = static_cast<uint8_t>(state[2] >> 0);
-    y[5] = static_cast<uint8_t>(state[2] >> 8);
-    y[6] = static_cast<uint8_t>(state[3] >> 0);
-    y[7] = static_cast<uint8_t>(state[3] >> 8);
-    y[8] = static_cast<uint8_t>(state[4] >> 0);
-    y[9] = static_cast<uint8_t>(state[4] >> 8);
-    y[10] = static_cast<uint8_t>(state[5] >> 0);
-    y[11] = static_cast<uint8_t>(state[5] >> 8);
-    y[12] = static_cast<uint8_t>(state[6] >> 0);
-    y[13] = static_cast<uint8_t>(state[6] >> 8);
-    y[14] = static_cast<uint8_t>(state[7] >> 0);
-    y[15] = static_cast<uint8_t>(state[7] >> 8);
+    for (size_t i = 0; i < knt_len; i++) {
+      y[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
+    }
 
     rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
 
-    state[0] = (static_cast<uint16_t>(skey[1]) << 8) |
-               (static_cast<uint16_t>(skey[0]) << 0);
-    state[1] = (static_cast<uint16_t>(skey[3]) << 8) |
-               (static_cast<uint16_t>(skey[2]) << 0);
-    state[2] = (static_cast<uint16_t>(skey[5]) << 8) |
-               (static_cast<uint16_t>(skey[4]) << 0);
-    state[3] = (static_cast<uint16_t>(skey[7]) << 8) |
-               (static_cast<uint16_t>(skey[6]) << 0);
-    state[4] = (static_cast<uint16_t>(skey[9]) << 8) |
-               (static_cast<uint16_t>(skey[8]) << 0);
-    state[5] = (static_cast<uint16_t>(skey[11]) << 8) |
-               (static_cast<uint16_t>(skey[10]) << 0);
-    state[6] = (static_cast<uint16_t>(skey[13]) << 8) |
-               (static_cast<uint16_t>(skey[12]) << 0);
-    state[7] = (static_cast<uint16_t>(skey[15]) << 8) |
-               (static_cast<uint16_t>(skey[14]) << 0);
+    for (size_t i = 0; i < 8; i++) {
+      const size_t skoff = i << 1;
+
+      state[i] = (static_cast<uint16_t>(skey[skoff ^ 1]) << 8) |
+                 (static_cast<uint16_t>(skey[skoff ^ 0]) << 0);
+    }
 
     keccak::permute<s_h>(state);
 
-    tag[0] = static_cast<uint8_t>(state[0] >> 0);
-    tag[1] = static_cast<uint8_t>(state[0] >> 8);
-    tag[2] = static_cast<uint8_t>(state[1] >> 0);
-    tag[3] = static_cast<uint8_t>(state[1] >> 8);
-    tag[4] = static_cast<uint8_t>(state[2] >> 0);
-    tag[5] = static_cast<uint8_t>(state[2] >> 8);
-    tag[6] = static_cast<uint8_t>(state[3] >> 0);
-    tag[7] = static_cast<uint8_t>(state[3] >> 8);
-    tag[8] = static_cast<uint8_t>(state[4] >> 0);
-    tag[9] = static_cast<uint8_t>(state[4] >> 8);
-    tag[10] = static_cast<uint8_t>(state[5] >> 0);
-    tag[11] = static_cast<uint8_t>(state[5] >> 8);
-    tag[12] = static_cast<uint8_t>(state[6] >> 0);
-    tag[13] = static_cast<uint8_t>(state[6] >> 8);
-    tag[14] = static_cast<uint8_t>(state[7] >> 0);
-    tag[15] = static_cast<uint8_t>(state[7] >> 8);
+    for (size_t i = 0; i < knt_len; i++) {
+      tag[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
+    }
 
     // --- end squeezing tag ---
   }
