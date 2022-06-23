@@ -6,14 +6,17 @@
 // https://github.com/itzmeanjan/ascon/blob/58a1a1e/include/permutation.hpp
 namespace ascon {
 
+// Maximum number of Ascon-p rounds that can be (safely) applied on state
+constexpr size_t MAX_ROUNDS = 12;
+
 // Ascon-p round constants; taken from table A.2 in ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr uint64_t RC[12] = { 0x00000000000000f0ul, 0x00000000000000e1ul,
-                              0x00000000000000d2ul, 0x00000000000000c3ul,
-                              0x00000000000000b4ul, 0x00000000000000a5ul,
-                              0x0000000000000096ul, 0x0000000000000087ul,
-                              0x0000000000000078ul, 0x0000000000000069ul,
-                              0x000000000000005aul, 0x000000000000004bul };
+constexpr uint64_t RC[MAX_ROUNDS] = {
+  0x00000000000000f0ul, 0x00000000000000e1ul, 0x00000000000000d2ul,
+  0x00000000000000c3ul, 0x00000000000000b4ul, 0x00000000000000a5ul,
+  0x0000000000000096ul, 0x0000000000000087ul, 0x0000000000000078ul,
+  0x0000000000000069ul, 0x000000000000005aul, 0x000000000000004bul
+};
 
 // Addition of constants step; see appendix A of ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
@@ -69,11 +72,11 @@ p_l(uint64_t* const state)
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
 template<const size_t ROUNDS>
 inline static void
-permute(uint64_t* const state) requires(check_lt_12(ROUNDS))
+permute(uint64_t* const state) requires(check_le_n(ROUNDS, MAX_ROUNDS))
 {
-  constexpr size_t beg = 12 - ROUNDS;
+  constexpr size_t beg = MAX_ROUNDS - ROUNDS;
 
-  for (size_t i = beg; i < 12; i++) {
+  for (size_t i = beg; i < MAX_ROUNDS; i++) {
     p_c(state, i);
     p_s(state);
     p_l(state);

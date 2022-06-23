@@ -5,12 +5,12 @@
 #include <random>
 #include <sstream>
 
-// Compile-time check to ensure # -of rounds Ascon-p permutation to be applied,
-// is lesser than 12
+// Compile-time check to ensure # -of rounds Ascon-p/ Keccak-p[400] permutation
+// to be applied, is lesser than or equal to `n`
 inline static constexpr bool
-check_lt_12(const size_t x)
+check_le_n(const size_t x, const size_t n)
 {
-  return x <= 12;
+  return x <= n;
 }
 
 // Given a bytearray of length N, this function converts it to human readable
