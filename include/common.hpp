@@ -611,7 +611,7 @@ mac(const uint8_t* const __restrict key,
         const size_t soff = i >> 1;
         const size_t boff = (i & 1) << 3;
 
-        const uint8_t w = static_cast<uint16_t>(data[off + i]) << boff;
+        const uint16_t w = static_cast<uint16_t>(data[off + i]) << boff;
 
         state[soff] ^= w;
       }
@@ -653,7 +653,7 @@ mac(const uint8_t* const __restrict key,
         const size_t soff = i >> 1;
         const size_t boff = (i & 1) << 3;
 
-        const uint8_t w = static_cast<uint16_t>(cipher[off + i]) << boff;
+        const uint16_t w = static_cast<uint16_t>(cipher[off + i]) << boff;
 
         state[soff] ^= w;
       }
