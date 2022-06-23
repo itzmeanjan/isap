@@ -51,11 +51,11 @@ theta(uint16_t* const state)
   d[0] = c[4] ^ std::rotl(c[1], 1);
 
   for (size_t x = 0; x < 5; x++) {
-    state[x + 0] ^= d[0];
-    state[x + 5] ^= d[1];
-    state[x + 10] ^= d[2];
-    state[x + 15] ^= d[3];
-    state[x + 20] ^= d[4];
+    state[x + 0] ^= d[x];
+    state[x + 5] ^= d[x];
+    state[x + 10] ^= d[x];
+    state[x + 15] ^= d[x];
+    state[x + 20] ^= d[x];
   }
 }
 
