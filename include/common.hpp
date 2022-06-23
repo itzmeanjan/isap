@@ -1,5 +1,6 @@
 #pragma once
 #include "ascon.hpp"
+#include "keccak.hpp"
 #include <algorithm>
 
 // ISAP AEAD common functions
@@ -145,7 +146,84 @@ rekeying(const uint8_t* const __restrict key,
     // --- end squeezing ---
 
   } else if constexpr (p == KECCAK) {
-    // not implemented yet !
+    // --- begin initialization ---
+
+    uint16_t state[25];
+
+    state[0] = (static_cast<uint16_t>(key[1]) << 8) |
+               (static_cast<uint16_t>(key[0]) << 0);
+    state[1] = (static_cast<uint16_t>(key[3]) << 8) |
+               (static_cast<uint16_t>(key[2]) << 0);
+    state[2] = (static_cast<uint16_t>(key[5]) << 8) |
+               (static_cast<uint16_t>(key[4]) << 0);
+    state[3] = (static_cast<uint16_t>(key[7]) << 8) |
+               (static_cast<uint16_t>(key[6]) << 0);
+    state[4] = (static_cast<uint16_t>(key[9]) << 8) |
+               (static_cast<uint16_t>(key[8]) << 0);
+    state[5] = (static_cast<uint16_t>(key[11]) << 8) |
+               (static_cast<uint16_t>(key[10]) << 0);
+    state[6] = (static_cast<uint16_t>(key[13]) << 8) |
+               (static_cast<uint16_t>(key[12]) << 0);
+    state[7] = (static_cast<uint16_t>(key[15]) << 8) |
+               (static_cast<uint16_t>(key[14]) << 0);
+
+    if constexpr (f == ENC) {
+      state[8] = (static_cast<uint16_t>(IV_KE[1]) << 8) |
+                 (static_cast<uint16_t>(IV_KE[0]) << 0);
+      state[9] = (static_cast<uint16_t>(IV_KE[3]) << 8) |
+                 (static_cast<uint16_t>(IV_KE[2]) << 0);
+      state[10] = (static_cast<uint16_t>(IV_KE[5]) << 8) |
+                  (static_cast<uint16_t>(IV_KE[4]) << 0);
+      state[11] = (static_cast<uint16_t>(IV_KE[7]) << 8) |
+                  (static_cast<uint16_t>(IV_KE[6]) << 0);
+    } else if constexpr (f == MAC) {
+      state[8] = (static_cast<uint16_t>(IV_KA[1]) << 8) |
+                 (static_cast<uint16_t>(IV_KA[0]) << 0);
+      state[9] = (static_cast<uint16_t>(IV_KA[3]) << 8) |
+                 (static_cast<uint16_t>(IV_KA[2]) << 0);
+      state[10] = (static_cast<uint16_t>(IV_KA[5]) << 8) |
+                  (static_cast<uint16_t>(IV_KA[4]) << 0);
+      state[11] = (static_cast<uint16_t>(IV_KA[7]) << 8) |
+                  (static_cast<uint16_t>(IV_KA[6]) << 0);
+    }
+
+    std::memset(state + 12, 0, slen - 24);
+
+    keccak::permute<s_k>(state);
+
+    // --- end initialization ---
+
+    // --- begin absorption ---
+
+    constexpr size_t bits = (knt_len << 3) - 1;
+
+    for (size_t i = 0; i < bits; i++) {
+      const size_t off = i >> 3;       // byte offset
+      const size_t bpos = 7 - (i & 7); // bit position in selected byte
+
+      const uint8_t bit = (y[off] >> bpos) & 0b1;
+      state[0] ^= static_cast<uint16_t>(bit) << 15;
+
+      keccak::permute<s_b>(state);
+    }
+
+    const uint8_t bit = y[15] & 0b1;
+    state[0] ^= static_cast<uint16_t>(bit) << 15;
+
+    keccak::permute<s_k>(state);
+
+    // --- end absorption ---
+
+    // --- begin squeezing ---
+
+    for (size_t i = 0; i < z; i++) {
+      const size_t soff = i >> 1;
+      const size_t boff = (i & 1) << 3;
+
+      skey[i] = static_cast<uint8_t>(state[soff] >> boff);
+    }
+
+    // --- end squeezing ---
   }
 }
 
