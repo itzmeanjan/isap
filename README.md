@@ -223,3 +223,57 @@ isap_bench::isap_a_128_aead_decrypt/32/2048       36774 ns        36744 ns      
 isap_bench::isap_a_128_aead_encrypt/32/4096       60544 ns        60514 ns        11127 bytes_per_second=65.056M/s
 isap_bench::isap_a_128_aead_decrypt/32/4096       61678 ns        61528 ns        10933 bytes_per_second=63.9838M/s
 ```
+
+## Usage
+
+Starting to use ISAP C++ API is as easy as including proper header files in your program and letting your compiler know where it can find these header files, which is `./include` directory.
+
+Here I've implemented full ISAP specification ( as submitted to NIST LWC final round call, see [here](https://csrc.nist.gov/projects/lightweight-cryptography/finalists) ) as zero-dependency, header-only C++ library. Following AEAD schemes can be used by importing respective header files, while you can also find usage examples in linked files
+
+AEAD Scheme | Header | Example
+--- | --- | ---
+ISAP-A-128A | `./include/isap_a_128a.hpp` | [isap_a_128a.cpp](https://github.com/itzmeanjan/isap/blob/afe3ae6/example/isap_a_128a.cpp)
+ISAP-A-128 | `./include/isap_a_128.hpp` | [isap_a_128.cpp](https://github.com/itzmeanjan/isap/blob/afe3ae6/example/isap_a_128.cpp)
+ISAP-K-128A | `./include/isap_k_128a.hpp` | [isap_k_128a.cpp](https://github.com/itzmeanjan/isap/blob/afe3ae6/example/isap_k_128a.cpp)
+ISAP-K-128 | `./include/isap_k_128.hpp` | [isap_k_128.cpp](https://github.com/itzmeanjan/isap/blob/afe3ae6/example/isap_k_128.cpp)
+
+Note, all these AEAD schemes expose same interface to users i.e.
+
+---
+
+`encrypt(...)`
+
+**Input :**
+
+- 16 -bytes secret key
+- 16 -bytes public message nonce
+- N -bytes associated data | N >= 0
+- M -bytes plain text | M >= 0
+
+**Output :**
+
+- 16 -bytes authentication tag
+- M -bytes cipher text | M >= 0
+
+> Avoid reusing same nonce under same secret key. 
+
+---
+
+`decrypt(...)`
+
+**Input :**
+
+- 16 -bytes secret key
+- 16 -bytes public message nonce
+- 16 -bytes authentication tag
+- N -bytes associated data | N >= 0
+- M -bytes cipher text | M >= 0
+
+**Output :**
+
+- Boolean verification flag
+- M -bytes plain text | M >= 0
+
+> Ensure presence of truth value in verification flag, before consuming decrypted bytes.
+
+These AEAD schemes are different based on what underlying permutation ( say whether `ascon` or `keccak-p[400]` ) they use and how many rounds of those are applied.
