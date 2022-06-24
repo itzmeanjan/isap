@@ -1,7 +1,21 @@
+#include "bench_ascon.hpp"
 #include "bench_isap_a_128.hpp"
 #include "bench_isap_a_128a.hpp"
 #include "bench_isap_k_128.hpp"
 #include "bench_isap_k_128a.hpp"
+#include "bench_keccak.hpp"
+
+// registering Ascon permutation for benchmark
+BENCHMARK(isap_bench::ascon_permutation<1>);
+BENCHMARK(isap_bench::ascon_permutation<6>);
+BENCHMARK(isap_bench::ascon_permutation<12>);
+
+// registering Keccak-p[400] permutation for benchmark
+BENCHMARK(isap_bench::keccak_permutation<1>);
+BENCHMARK(isap_bench::keccak_permutation<8>);
+BENCHMARK(isap_bench::keccak_permutation<12>);
+BENCHMARK(isap_bench::keccak_permutation<16>);
+BENCHMARK(isap_bench::keccak_permutation<20>);
 
 // registering ISAP-A-128A encrypt/ decrypt routines for benchmark
 BENCHMARK(isap_bench::isap_a_128a_aead_encrypt)->Args({ 32, 64 });
