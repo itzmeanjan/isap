@@ -1,5 +1,5 @@
 #pragma once
-#include "isap_a_128a.hpp"
+#include "isap_k_128.hpp"
 #include "utils.hpp"
 #include <benchmark/benchmark.h>
 #include <cstring>
@@ -7,9 +7,9 @@
 // Benchmark ISAP Authenticated Encryption with Associated Data
 namespace isap_bench {
 
-// Benchmarks ISAP-A-128A instance's encrypt routine on CPU based systems
+// Benchmarks ISAP-K-128 instance's encrypt routine on CPU based systems
 static void
-isap_a_128a_aead_encrypt(benchmark::State& state)
+isap_k_128_aead_encrypt(benchmark::State& state)
 {
   const size_t dlen = static_cast<size_t>(state.range(0));
   const size_t mlen = static_cast<size_t>(state.range(1));
@@ -32,7 +32,7 @@ isap_a_128a_aead_encrypt(benchmark::State& state)
   std::memset(dec, 0, mlen);
 
   for (auto _ : state) {
-    isap_a_128a::encrypt(key, nonce, data, dlen, txt, enc, mlen, tag);
+    isap_k_128::encrypt(key, nonce, data, dlen, txt, enc, mlen, tag);
 
     benchmark::DoNotOptimize(enc);
     benchmark::DoNotOptimize(tag);
@@ -41,7 +41,7 @@ isap_a_128a_aead_encrypt(benchmark::State& state)
 
   // --- test correctness ---
   bool f0 = false;
-  f0 = isap_a_128a::decrypt(key, nonce, tag, data, dlen, enc, dec, mlen);
+  f0 = isap_k_128::decrypt(key, nonce, tag, data, dlen, enc, dec, mlen);
 
   assert(f0);
 
@@ -65,9 +65,9 @@ isap_a_128a_aead_encrypt(benchmark::State& state)
   std::free(dec);
 }
 
-// Benchmarks ISAP-A-128A instance's decrypt routine on CPU based systems
+// Benchmarks ISAP-K-128 instance's decrypt routine on CPU based systems
 static void
-isap_a_128a_aead_decrypt(benchmark::State& state)
+isap_k_128_aead_decrypt(benchmark::State& state)
 {
   const size_t dlen = static_cast<size_t>(state.range(0));
   const size_t mlen = static_cast<size_t>(state.range(1));
@@ -89,11 +89,11 @@ isap_a_128a_aead_decrypt(benchmark::State& state)
   std::memset(enc, 0, mlen);
   std::memset(dec, 0, mlen);
 
-  isap_a_128a::encrypt(key, nonce, data, dlen, txt, enc, mlen, tag);
+  isap_k_128::encrypt(key, nonce, data, dlen, txt, enc, mlen, tag);
 
   for (auto _ : state) {
     bool f = false;
-    f = isap_a_128a::decrypt(key, nonce, tag, data, dlen, enc, dec, mlen);
+    f = isap_k_128::decrypt(key, nonce, tag, data, dlen, enc, dec, mlen);
 
     benchmark::DoNotOptimize(f);
     benchmark::DoNotOptimize(dec);

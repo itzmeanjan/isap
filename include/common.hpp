@@ -1,5 +1,6 @@
 #pragma once
 #include "ascon.hpp"
+#include "keccak.hpp"
 #include <algorithm>
 
 // ISAP AEAD common functions
@@ -145,7 +146,72 @@ rekeying(const uint8_t* const __restrict key,
     // --- end squeezing ---
 
   } else if constexpr (p == KECCAK) {
-    // not implemented yet !
+    // --- begin initialization ---
+
+    uint16_t state[25] = {};
+
+    for (size_t i = 0; i < 8; i++) {
+      const size_t koff = i << 1;
+
+      state[i] = (static_cast<uint16_t>(key[koff ^ 1]) << 8) |
+                 (static_cast<uint16_t>(key[koff ^ 0]) << 0);
+    }
+
+    if constexpr (f == ENC) {
+      constexpr size_t soff = 8;
+
+      for (size_t i = 0; i < 4; i++) {
+        const size_t ivoff = i << 1;
+
+        state[soff + i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
+                          (static_cast<uint16_t>(IV_KE[ivoff ^ 0]) << 0);
+      }
+    } else if constexpr (f == MAC) {
+      constexpr size_t soff = 8;
+
+      for (size_t i = 0; i < 4; i++) {
+        const size_t ivoff = i << 1;
+
+        state[soff + i] = (static_cast<uint16_t>(IV_KA[ivoff ^ 1]) << 8) |
+                          (static_cast<uint16_t>(IV_KA[ivoff ^ 0]) << 0);
+      }
+    }
+
+    keccak::permute<s_k>(state);
+
+    // --- end initialization ---
+
+    // --- begin absorption ---
+
+    constexpr size_t bits = (knt_len << 3) - 1;
+
+    for (size_t i = 0; i < bits; i++) {
+      const size_t off = i >> 3;       // byte offset
+      const size_t bpos = 7 - (i & 7); // bit position in selected byte
+
+      const uint8_t bit = (y[off] >> bpos) & 0b1;
+      state[0] ^= static_cast<uint16_t>(bit) << 7;
+
+      keccak::permute<s_b>(state);
+    }
+
+    const uint8_t bit = y[15] & 0b1;
+    state[0] ^= static_cast<uint16_t>(bit) << 7;
+
+    keccak::permute<s_k>(state);
+
+    // --- end absorption ---
+
+    // --- begin squeezing ---
+
+    for (size_t i = 0; i < z; i++) {
+      const size_t soff = i >> 1;
+      const size_t boff = (i & 1) << 3;
+
+      skey[i] = static_cast<uint8_t>(state[soff] >> boff);
+    }
+
+    // --- end squeezing ---
   }
 }
 
@@ -247,7 +313,49 @@ enc(const uint8_t* const __restrict key,
     // --- end squeezing ---
 
   } else if (p == KECCAK) {
-    // not implemented yet !
+    // --- begin initialization ---
+
+    constexpr size_t z = slen - knt_len;
+
+    uint8_t skey[z];
+    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
+
+    uint16_t state[25];
+
+    for (size_t i = 0; i < z; i += 2) {
+      const size_t soff = i >> 1;
+
+      state[soff] = (static_cast<uint16_t>(skey[i + 1]) << 8) |
+                    (static_cast<uint16_t>(skey[i + 0]) << 0);
+    }
+
+    constexpr size_t soff = z >> 1;
+    for (size_t i = 0; i < 8; i++) {
+      const size_t noff = i << 1;
+
+      state[soff + i] = (static_cast<uint16_t>(nonce[noff ^ 1]) << 8) |
+                        (static_cast<uint16_t>(nonce[noff ^ 0]) << 0);
+    }
+
+    // --- end initialization ---
+
+    // --- begin squeezing ---
+
+    for (size_t off = 0; off < mlen; off += rate) {
+      keccak::permute<s_e>(state);
+
+      const size_t elen = std::min(rate, mlen - off);
+      for (size_t j = 0; j < elen; j++) {
+        const size_t soff = j >> 1;
+        const size_t boff = (j & 1) << 3;
+
+        const uint8_t b = static_cast<uint8_t>(state[soff] >> boff);
+
+        out[off + j] = msg[off + j] ^ b;
+      }
+    }
+
+    // --- end squeezing ---
   }
 }
 
@@ -454,7 +562,136 @@ mac(const uint8_t* const __restrict key,
     // --- end squeezing tag ---
 
   } else if (p == KECCAK) {
-    // not implemented yet !
+    // --- begin initialization ---
+
+    uint16_t state[25] = {};
+
+    for (size_t i = 0; i < 8; i++) {
+      const size_t noff = i << 1;
+
+      state[i] = (static_cast<uint16_t>(nonce[noff ^ 1]) << 8) |
+                 (static_cast<uint16_t>(nonce[noff ^ 0]) << 0);
+    }
+
+    constexpr size_t soff = 8;
+    for (size_t i = 0; i < 4; i++) {
+      const size_t ivoff = i << 1;
+
+      state[soff + i] = (static_cast<uint16_t>(IV_A[ivoff ^ 1]) << 8) |
+                        (static_cast<uint16_t>(IV_A[ivoff ^ 0]) << 0);
+    }
+
+    keccak::permute<s_h>(state);
+
+    // --- end initialization ---
+
+    // --- begin absorbing associated data ---
+    {
+      const size_t blk_cnt = dlen / rate;
+      const size_t rm_bytes = dlen % rate;
+
+      for (size_t i = 0; i < blk_cnt; i++) {
+        const size_t off = i * rate;
+
+        for (size_t j = 0; j < rate; j += 2) {
+          const size_t soff = j >> 1;
+          const uint16_t w = (static_cast<uint16_t>(data[off + j + 1]) << 8) |
+                             (static_cast<uint16_t>(data[off + j + 0]) << 0);
+
+          state[soff] ^= w;
+        }
+
+        keccak::permute<s_h>(state);
+      }
+
+      const size_t off = blk_cnt * rate;
+
+      for (size_t i = 0; i < rm_bytes; i++) {
+        const size_t soff = i >> 1;
+        const size_t boff = (i & 1) << 3;
+
+        const uint16_t w = static_cast<uint16_t>(data[off + i]) << boff;
+
+        state[soff] ^= w;
+      }
+
+      const size_t soff = rm_bytes >> 1;
+      const size_t boff = (rm_bytes & 1) << 3;
+
+      const uint16_t w = static_cast<uint16_t>(seperator) << boff;
+
+      state[soff] ^= w;
+      keccak::permute<s_h>(state);
+
+      state[24] ^= 0b1 << 8; // seperator between associated data & cipher text
+    }
+    // --- end absorbing associated data ---
+
+    // --- begin absorbing cipher text ---
+    {
+      const size_t blk_cnt = clen / rate;
+      const size_t rm_bytes = clen % rate;
+
+      for (size_t i = 0; i < blk_cnt; i++) {
+        const size_t off = i * rate;
+
+        for (size_t j = 0; j < rate; j += 2) {
+          const size_t soff = j >> 1;
+          const uint16_t w = (static_cast<uint16_t>(cipher[off + j + 1]) << 8) |
+                             (static_cast<uint16_t>(cipher[off + j + 0]) << 0);
+
+          state[soff] ^= w;
+        }
+
+        keccak::permute<s_h>(state);
+      }
+
+      const size_t off = blk_cnt * rate;
+
+      for (size_t i = 0; i < rm_bytes; i++) {
+        const size_t soff = i >> 1;
+        const size_t boff = (i & 1) << 3;
+
+        const uint16_t w = static_cast<uint16_t>(cipher[off + i]) << boff;
+
+        state[soff] ^= w;
+      }
+
+      const size_t soff = rm_bytes >> 1;
+      const size_t boff = (rm_bytes & 1) << 3;
+
+      const uint16_t w = static_cast<uint16_t>(seperator) << boff;
+
+      state[soff] ^= w;
+      keccak::permute<s_h>(state);
+    }
+    // --- end absorbing cipher text ---
+
+    // --- begin squeezing tag ---
+
+    uint8_t y[knt_len];
+    uint8_t skey[knt_len];
+
+    for (size_t i = 0; i < knt_len; i++) {
+      y[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
+    }
+
+    rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
+
+    for (size_t i = 0; i < 8; i++) {
+      const size_t skoff = i << 1;
+
+      state[i] = (static_cast<uint16_t>(skey[skoff ^ 1]) << 8) |
+                 (static_cast<uint16_t>(skey[skoff ^ 0]) << 0);
+    }
+
+    keccak::permute<s_h>(state);
+
+    for (size_t i = 0; i < knt_len; i++) {
+      tag[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
+    }
+
+    // --- end squeezing tag ---
   }
 }
 
