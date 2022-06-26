@@ -93,7 +93,7 @@ make benchmark
 ### On AWS Graviton3
 
 ```fish
-2022-06-24T09:03:25+00:00
+2022-06-26T08:14:42+00:00
 Running ./bench/a.out
 Run on (64 X 2100 MHz CPU s)
 CPU Caches:
@@ -101,160 +101,160 @@ CPU Caches:
   L1 Instruction 64 KiB (x64)
   L2 Unified 1024 KiB (x64)
   L3 Unified 32768 KiB (x1)
-Load Average: 0.24, 0.06, 0.02
+Load Average: 0.08, 0.02, 0.01
 -------------------------------------------------------------------------------------------------------
 Benchmark                                             Time             CPU   Iterations UserCounters...
 -------------------------------------------------------------------------------------------------------
-isap_bench::ascon_permutation<1>                   6.83 ns         6.83 ns    102346075 bytes_per_second=5.45043G/s
-isap_bench::ascon_permutation<6>                   28.4 ns         28.4 ns     24625129 bytes_per_second=1.31138G/s
-isap_bench::ascon_permutation<12>                  54.7 ns         54.7 ns     12783053 bytes_per_second=697.62M/s
-isap_bench::keccak_permutation<1>                  40.4 ns         40.4 ns     17369151 bytes_per_second=1.15346G/s
-isap_bench::keccak_permutation<8>                   240 ns          240 ns      2917582 bytes_per_second=198.742M/s
-isap_bench::keccak_permutation<12>                  338 ns          338 ns      2070655 bytes_per_second=141.113M/s
-isap_bench::keccak_permutation<16>                  449 ns          449 ns      1560318 bytes_per_second=106.279M/s
-isap_bench::keccak_permutation<20>                  562 ns          562 ns      1246480 bytes_per_second=84.8449M/s
-isap_bench::isap_a_128a_aead_encrypt/32/64         2536 ns         2536 ns       276146 bytes_per_second=36.1049M/s
-isap_bench::isap_a_128a_aead_decrypt/32/64         2549 ns         2549 ns       274763 bytes_per_second=35.9227M/s
-isap_bench::isap_a_128a_aead_encrypt/32/128        3191 ns         3191 ns       219363 bytes_per_second=47.8193M/s
-isap_bench::isap_a_128a_aead_decrypt/32/128        3205 ns         3205 ns       218528 bytes_per_second=47.6131M/s
-isap_bench::isap_a_128a_aead_encrypt/32/256        4497 ns         4497 ns       155462 bytes_per_second=61.0804M/s
-isap_bench::isap_a_128a_aead_decrypt/32/256        4505 ns         4505 ns       155173 bytes_per_second=60.9739M/s
-isap_bench::isap_a_128a_aead_encrypt/32/512        7092 ns         7092 ns        98687 bytes_per_second=73.1503M/s
-isap_bench::isap_a_128a_aead_decrypt/32/512        7112 ns         7111 ns        98532 bytes_per_second=72.9521M/s
-isap_bench::isap_a_128a_aead_encrypt/32/1024      12374 ns        12374 ns        56570 bytes_per_second=81.3863M/s
-isap_bench::isap_a_128a_aead_decrypt/32/1024      12386 ns        12386 ns        56515 bytes_per_second=81.3069M/s
-isap_bench::isap_a_128a_aead_encrypt/32/2048      22870 ns        22870 ns        30605 bytes_per_second=86.7358M/s
-isap_bench::isap_a_128a_aead_decrypt/32/2048      22866 ns        22866 ns        30594 bytes_per_second=86.7523M/s
-isap_bench::isap_a_128a_aead_encrypt/32/4096      43866 ns        43864 ns        15971 bytes_per_second=89.7497M/s
-isap_bench::isap_a_128a_aead_decrypt/32/4096      43878 ns        43877 ns        15954 bytes_per_second=89.723M/s
-isap_bench::isap_a_128_aead_encrypt/32/64         14926 ns        14926 ns        46895 bytes_per_second=6.13389M/s
-isap_bench::isap_a_128_aead_decrypt/32/64         14941 ns        14941 ns        46856 bytes_per_second=6.12769M/s
-isap_bench::isap_a_128_aead_encrypt/32/128        15767 ns        15767 ns        44426 bytes_per_second=9.67775M/s
-isap_bench::isap_a_128_aead_decrypt/32/128        15791 ns        15791 ns        44316 bytes_per_second=9.66307M/s
-isap_bench::isap_a_128_aead_encrypt/32/256        17467 ns        17466 ns        40078 bytes_per_second=15.7256M/s
-isap_bench::isap_a_128_aead_decrypt/32/256        17486 ns        17485 ns        40035 bytes_per_second=15.7079M/s
-isap_bench::isap_a_128_aead_encrypt/32/512        20848 ns        20847 ns        33575 bytes_per_second=24.8855M/s
-isap_bench::isap_a_128_aead_decrypt/32/512        20864 ns        20863 ns        33550 bytes_per_second=24.8667M/s
-isap_bench::isap_a_128_aead_encrypt/32/1024       27604 ns        27603 ns        25360 bytes_per_second=36.4839M/s
-isap_bench::isap_a_128_aead_decrypt/32/1024       27620 ns        27618 ns        25349 bytes_per_second=36.4642M/s
-isap_bench::isap_a_128_aead_encrypt/32/2048       41104 ns        41102 ns        17053 bytes_per_second=48.261M/s
-isap_bench::isap_a_128_aead_decrypt/32/2048       41108 ns        41107 ns        17027 bytes_per_second=48.2555M/s
-isap_bench::isap_a_128_aead_encrypt/32/4096       68096 ns        68092 ns        10279 bytes_per_second=57.8153M/s
-isap_bench::isap_a_128_aead_decrypt/32/4096       68111 ns        68110 ns        10279 bytes_per_second=57.8004M/s
-isap_bench::isap_k_128a_aead_encrypt/32/64        13309 ns        13308 ns        52602 bytes_per_second=6.87945M/s
-isap_bench::isap_k_128a_aead_decrypt/32/64        13320 ns        13319 ns        52562 bytes_per_second=6.87378M/s
-isap_bench::isap_k_128a_aead_encrypt/32/128       16131 ns        16131 ns        43388 bytes_per_second=9.45923M/s
-isap_bench::isap_k_128a_aead_decrypt/32/128       16142 ns        16141 ns        43365 bytes_per_second=9.45345M/s
-isap_bench::isap_k_128a_aead_encrypt/32/256       21092 ns        21091 ns        33190 bytes_per_second=13.0222M/s
-isap_bench::isap_k_128a_aead_decrypt/32/256       21103 ns        21102 ns        33173 bytes_per_second=13.0158M/s
-isap_bench::isap_k_128a_aead_encrypt/32/512       31017 ns        31016 ns        22569 bytes_per_second=16.7268M/s
-isap_bench::isap_k_128a_aead_decrypt/32/512       31030 ns        31029 ns        22560 bytes_per_second=16.7197M/s
-isap_bench::isap_k_128a_aead_encrypt/32/1024      50851 ns        50850 ns        13766 bytes_per_second=19.8049M/s
-isap_bench::isap_k_128a_aead_decrypt/32/1024      50860 ns        50859 ns        13764 bytes_per_second=19.8015M/s
-isap_bench::isap_k_128a_aead_encrypt/32/2048      91214 ns        91212 ns         7673 bytes_per_second=21.7477M/s
-isap_bench::isap_k_128a_aead_decrypt/32/2048      91210 ns        91207 ns         7674 bytes_per_second=21.7487M/s
-isap_bench::isap_k_128a_aead_encrypt/32/4096     171933 ns       171928 ns         4071 bytes_per_second=22.8977M/s
-isap_bench::isap_k_128a_aead_decrypt/32/4096     171933 ns       171929 ns         4071 bytes_per_second=22.8976M/s
-isap_bench::isap_k_128_aead_encrypt/32/64         94713 ns        94710 ns         7391 bytes_per_second=989.867k/s
-isap_bench::isap_k_128_aead_decrypt/32/64         94643 ns        94641 ns         7398 bytes_per_second=990.588k/s
-isap_bench::isap_k_128_aead_encrypt/32/128        98504 ns        98502 ns         7105 bytes_per_second=1.54909M/s
-isap_bench::isap_k_128_aead_decrypt/32/128        98405 ns        98402 ns         7112 bytes_per_second=1.55066M/s
-isap_bench::isap_k_128_aead_encrypt/32/256       105193 ns       105189 ns         6658 bytes_per_second=2.6111M/s
-isap_bench::isap_k_128_aead_decrypt/32/256       105109 ns       105105 ns         6658 bytes_per_second=2.61317M/s
-isap_bench::isap_k_128_aead_encrypt/32/512       118654 ns       118652 ns         5903 bytes_per_second=4.37245M/s
-isap_bench::isap_k_128_aead_decrypt/32/512       118539 ns       118537 ns         5906 bytes_per_second=4.37669M/s
-isap_bench::isap_k_128_aead_encrypt/32/1024      145345 ns       145341 ns         4814 bytes_per_second=6.92907M/s
-isap_bench::isap_k_128_aead_decrypt/32/1024      145271 ns       145268 ns         4819 bytes_per_second=6.93256M/s
-isap_bench::isap_k_128_aead_encrypt/32/2048      199711 ns       199706 ns         3504 bytes_per_second=9.93283M/s
-isap_bench::isap_k_128_aead_decrypt/32/2048      199729 ns       199725 ns         3505 bytes_per_second=9.93186M/s
-isap_bench::isap_k_128_aead_encrypt/32/4096      308668 ns       308659 ns         2267 bytes_per_second=12.7544M/s
-isap_bench::isap_k_128_aead_decrypt/32/4096      308678 ns       308672 ns         2268 bytes_per_second=12.7539M/s
+isap_bench::ascon_permutation<1>                   6.83 ns         6.83 ns    102305815 bytes_per_second=5.45049G/s
+isap_bench::ascon_permutation<6>                   28.4 ns         28.4 ns     24630614 bytes_per_second=1.31058G/s
+isap_bench::ascon_permutation<12>                  55.0 ns         55.0 ns     12730434 bytes_per_second=693.766M/s
+isap_bench::keccak_permutation<1>                  30.1 ns         30.1 ns     23288167 bytes_per_second=1.54483G/s
+isap_bench::keccak_permutation<8>                   188 ns          188 ns      3717539 bytes_per_second=253.417M/s
+isap_bench::keccak_permutation<12>                  275 ns          275 ns      2542617 bytes_per_second=173.154M/s
+isap_bench::keccak_permutation<16>                  364 ns          364 ns      1924748 bytes_per_second=131.132M/s
+isap_bench::keccak_permutation<20>                  461 ns          461 ns      1518210 bytes_per_second=103.376M/s
+isap_bench::isap_a_128a_aead_encrypt/32/64         2515 ns         2515 ns       278309 bytes_per_second=36.4028M/s
+isap_bench::isap_a_128a_aead_decrypt/32/64         2529 ns         2529 ns       276742 bytes_per_second=36.2072M/s
+isap_bench::isap_a_128a_aead_encrypt/32/128        3176 ns         3176 ns       220366 bytes_per_second=48.043M/s
+isap_bench::isap_a_128a_aead_decrypt/32/128        3188 ns         3188 ns       219640 bytes_per_second=47.8598M/s
+isap_bench::isap_a_128a_aead_encrypt/32/256        4493 ns         4492 ns       155880 bytes_per_second=61.1381M/s
+isap_bench::isap_a_128a_aead_decrypt/32/256        4506 ns         4505 ns       155333 bytes_per_second=60.9619M/s
+isap_bench::isap_a_128a_aead_encrypt/32/512        7127 ns         7127 ns        98217 bytes_per_second=72.7966M/s
+isap_bench::isap_a_128a_aead_decrypt/32/512        7140 ns         7139 ns        98001 bytes_per_second=72.6669M/s
+isap_bench::isap_a_128a_aead_encrypt/32/1024      12393 ns        12392 ns        56488 bytes_per_second=81.2666M/s
+isap_bench::isap_a_128a_aead_decrypt/32/1024      12409 ns        12409 ns        56399 bytes_per_second=81.1591M/s
+isap_bench::isap_a_128a_aead_encrypt/32/2048      22928 ns        22927 ns        30538 bytes_per_second=86.5197M/s
+isap_bench::isap_a_128a_aead_decrypt/32/2048      22948 ns        22948 ns        30503 bytes_per_second=86.4424M/s
+isap_bench::isap_a_128a_aead_encrypt/32/4096      43959 ns        43958 ns        15937 bytes_per_second=89.5576M/s
+isap_bench::isap_a_128a_aead_decrypt/32/4096      44018 ns        44016 ns        15899 bytes_per_second=89.4393M/s
+isap_bench::isap_a_128_aead_encrypt/32/64         15109 ns        15109 ns        46345 bytes_per_second=6.05958M/s
+isap_bench::isap_a_128_aead_decrypt/32/64         15109 ns        15109 ns        46316 bytes_per_second=6.05942M/s
+isap_bench::isap_a_128_aead_encrypt/32/128        16025 ns        16024 ns        43795 bytes_per_second=9.52224M/s
+isap_bench::isap_a_128_aead_decrypt/32/128        16001 ns        16001 ns        43735 bytes_per_second=9.53631M/s
+isap_bench::isap_a_128_aead_encrypt/32/256        17693 ns        17693 ns        39520 bytes_per_second=15.5239M/s
+isap_bench::isap_a_128_aead_decrypt/32/256        17682 ns        17681 ns        39574 bytes_per_second=15.5339M/s
+isap_bench::isap_a_128_aead_encrypt/32/512        21037 ns        21037 ns        33284 bytes_per_second=24.6612M/s
+isap_bench::isap_a_128_aead_decrypt/32/512        21023 ns        21023 ns        33296 bytes_per_second=24.678M/s
+isap_bench::isap_a_128_aead_encrypt/32/1024       27677 ns        27677 ns        25294 bytes_per_second=36.3874M/s
+isap_bench::isap_a_128_aead_decrypt/32/1024       27674 ns        27674 ns        25306 bytes_per_second=36.3914M/s
+isap_bench::isap_a_128_aead_encrypt/32/2048       40990 ns        40989 ns        17076 bytes_per_second=48.3941M/s
+isap_bench::isap_a_128_aead_decrypt/32/2048       41000 ns        40999 ns        17077 bytes_per_second=48.3827M/s
+isap_bench::isap_a_128_aead_encrypt/32/4096       67933 ns        67931 ns        10359 bytes_per_second=57.9527M/s
+isap_bench::isap_a_128_aead_decrypt/32/4096       68202 ns        68201 ns        10246 bytes_per_second=57.7233M/s
+isap_bench::isap_k_128a_aead_encrypt/32/64         9649 ns         9649 ns        72547 bytes_per_second=9.48812M/s
+isap_bench::isap_k_128a_aead_decrypt/32/64         9663 ns         9662 ns        72443 bytes_per_second=9.47521M/s
+isap_bench::isap_k_128a_aead_encrypt/32/128       11623 ns        11623 ns        60214 bytes_per_second=13.1281M/s
+isap_bench::isap_k_128a_aead_decrypt/32/128       11637 ns        11637 ns        60148 bytes_per_second=13.1122M/s
+isap_bench::isap_k_128a_aead_encrypt/32/256       15155 ns        15154 ns        46361 bytes_per_second=18.1239M/s
+isap_bench::isap_k_128a_aead_decrypt/32/256       15110 ns        15110 ns        46326 bytes_per_second=18.1772M/s
+isap_bench::isap_k_128a_aead_encrypt/32/512       22043 ns        22043 ns        31751 bytes_per_second=23.5359M/s
+isap_bench::isap_k_128a_aead_decrypt/32/512       22058 ns        22057 ns        31734 bytes_per_second=23.5204M/s
+isap_bench::isap_k_128a_aead_encrypt/32/1024      35924 ns        35924 ns        19486 bytes_per_second=28.034M/s
+isap_bench::isap_k_128a_aead_decrypt/32/1024      35938 ns        35937 ns        19478 bytes_per_second=28.0233M/s
+isap_bench::isap_k_128a_aead_encrypt/32/2048      64126 ns        64124 ns        10916 bytes_per_second=30.9344M/s
+isap_bench::isap_k_128a_aead_decrypt/32/2048      64147 ns        64146 ns        10914 bytes_per_second=30.924M/s
+isap_bench::isap_k_128a_aead_encrypt/32/4096     120518 ns       120515 ns         5808 bytes_per_second=32.6661M/s
+isap_bench::isap_k_128a_aead_decrypt/32/4096     120548 ns       120543 ns         5806 bytes_per_second=32.6586M/s
+isap_bench::isap_k_128_aead_encrypt/32/64         70928 ns        70926 ns         9869 bytes_per_second=1.29081M/s
+isap_bench::isap_k_128_aead_decrypt/32/64         70934 ns        70931 ns         9860 bytes_per_second=1.29073M/s
+isap_bench::isap_k_128_aead_encrypt/32/128        73593 ns        73591 ns         9519 bytes_per_second=2.07347M/s
+isap_bench::isap_k_128_aead_decrypt/32/128        73611 ns        73609 ns         9510 bytes_per_second=2.07295M/s
+isap_bench::isap_k_128_aead_encrypt/32/256        78154 ns        78152 ns         8957 bytes_per_second=3.51439M/s
+isap_bench::isap_k_128_aead_decrypt/32/256        78177 ns        78176 ns         8955 bytes_per_second=3.51334M/s
+isap_bench::isap_k_128_aead_encrypt/32/512        87432 ns        87429 ns         8004 bytes_per_second=5.93392M/s
+isap_bench::isap_k_128_aead_decrypt/32/512        87401 ns        87400 ns         8008 bytes_per_second=5.93594M/s
+isap_bench::isap_k_128_aead_encrypt/32/1024      105830 ns       105826 ns         6614 bytes_per_second=9.51635M/s
+isap_bench::isap_k_128_aead_decrypt/32/1024      105829 ns       105826 ns         6611 bytes_per_second=9.51637M/s
+isap_bench::isap_k_128_aead_encrypt/32/2048      143163 ns       143160 ns         4889 bytes_per_second=13.8561M/s
+isap_bench::isap_k_128_aead_decrypt/32/2048      143200 ns       143197 ns         4888 bytes_per_second=13.8525M/s
+isap_bench::isap_k_128_aead_encrypt/32/4096      217956 ns       217951 ns         3212 bytes_per_second=18.0626M/s
+isap_bench::isap_k_128_aead_decrypt/32/4096      217995 ns       217988 ns         3211 bytes_per_second=18.0595M/s
 ```
 
 ### On AWS Graviton2
 
 ```fish
-2022-06-24T09:00:25+00:00
+2022-06-26T08:12:44+00:00
 Running ./bench/a.out
 Run on (16 X 166.66 MHz CPU s)
 CPU Caches:
   L1 Data 32 KiB (x16)
   L1 Instruction 48 KiB (x16)
   L2 Unified 2048 KiB (x4)
-Load Average: 0.49, 0.17, 0.06
+Load Average: 0.00, 0.08, 0.16
 -------------------------------------------------------------------------------------------------------
 Benchmark                                             Time             CPU   Iterations UserCounters...
 -------------------------------------------------------------------------------------------------------
-isap_bench::ascon_permutation<1>                   11.7 ns         11.7 ns     59560299 bytes_per_second=3.17139G/s
-isap_bench::ascon_permutation<6>                   44.6 ns         44.6 ns     15697145 bytes_per_second=855.424M/s
-isap_bench::ascon_permutation<12>                  94.0 ns         94.0 ns      7448751 bytes_per_second=405.936M/s
-isap_bench::keccak_permutation<1>                  62.2 ns         62.2 ns     11249382 bytes_per_second=766.389M/s
-isap_bench::keccak_permutation<8>                   515 ns          515 ns      1358867 bytes_per_second=92.5696M/s
-isap_bench::keccak_permutation<12>                  770 ns          770 ns       909494 bytes_per_second=61.9564M/s
-isap_bench::keccak_permutation<16>                 1020 ns         1020 ns       686089 bytes_per_second=46.7369M/s
-isap_bench::keccak_permutation<20>                 1237 ns         1237 ns       565919 bytes_per_second=38.5512M/s
-isap_bench::isap_a_128a_aead_encrypt/32/64         4513 ns         4513 ns       155111 bytes_per_second=20.2879M/s
-isap_bench::isap_a_128a_aead_decrypt/32/64         4525 ns         4525 ns       154668 bytes_per_second=20.2324M/s
-isap_bench::isap_a_128a_aead_encrypt/32/128        5623 ns         5623 ns       124553 bytes_per_second=27.1345M/s
-isap_bench::isap_a_128a_aead_decrypt/32/128        5634 ns         5634 ns       124235 bytes_per_second=27.0832M/s
-isap_bench::isap_a_128a_aead_encrypt/32/256        7848 ns         7848 ns        89176 bytes_per_second=34.9977M/s
-isap_bench::isap_a_128a_aead_decrypt/32/256        7868 ns         7868 ns        88983 bytes_per_second=34.9085M/s
-isap_bench::isap_a_128a_aead_encrypt/32/512       12291 ns        12291 ns        56931 bytes_per_second=42.2109M/s
-isap_bench::isap_a_128a_aead_decrypt/32/512       12306 ns        12305 ns        56854 bytes_per_second=42.16M/s
-isap_bench::isap_a_128a_aead_encrypt/32/1024      21174 ns        21174 ns        33063 bytes_per_second=47.5629M/s
-isap_bench::isap_a_128a_aead_decrypt/32/1024      21191 ns        21191 ns        33038 bytes_per_second=47.524M/s
-isap_bench::isap_a_128a_aead_encrypt/32/2048      38942 ns        38941 ns        17977 bytes_per_second=50.9391M/s
-isap_bench::isap_a_128a_aead_decrypt/32/2048      38954 ns        38953 ns        17970 bytes_per_second=50.9235M/s
-isap_bench::isap_a_128a_aead_encrypt/32/4096      74481 ns        74479 ns         9399 bytes_per_second=52.8577M/s
-isap_bench::isap_a_128a_aead_decrypt/32/4096      74489 ns        74488 ns         9395 bytes_per_second=52.8509M/s
-isap_bench::isap_a_128_aead_encrypt/32/64         26013 ns        26013 ns        26909 bytes_per_second=3.51955M/s
-isap_bench::isap_a_128_aead_decrypt/32/64         26011 ns        26010 ns        26909 bytes_per_second=3.51993M/s
-isap_bench::isap_a_128_aead_encrypt/32/128        27483 ns        27483 ns        25469 bytes_per_second=5.55203M/s
-isap_bench::isap_a_128_aead_decrypt/32/128        27491 ns        27490 ns        25463 bytes_per_second=5.55059M/s
-isap_bench::isap_a_128_aead_encrypt/32/256        30454 ns        30454 ns        22989 bytes_per_second=9.01877M/s
-isap_bench::isap_a_128_aead_decrypt/32/256        30464 ns        30464 ns        22978 bytes_per_second=9.01594M/s
-isap_bench::isap_a_128_aead_encrypt/32/512        36381 ns        36381 ns        19241 bytes_per_second=14.2601M/s
-isap_bench::isap_a_128_aead_decrypt/32/512        36395 ns        36394 ns        19233 bytes_per_second=14.2551M/s
-isap_bench::isap_a_128_aead_encrypt/32/1024       48246 ns        48244 ns        14509 bytes_per_second=20.8747M/s
-isap_bench::isap_a_128_aead_decrypt/32/1024       48259 ns        48258 ns        14504 bytes_per_second=20.8687M/s
-isap_bench::isap_a_128_aead_encrypt/32/2048       71971 ns        71970 ns         9726 bytes_per_second=27.5621M/s
-isap_bench::isap_a_128_aead_decrypt/32/2048       71979 ns        71977 ns         9725 bytes_per_second=27.5595M/s
-isap_bench::isap_a_128_aead_encrypt/32/4096      119417 ns       119416 ns         5862 bytes_per_second=32.9667M/s
-isap_bench::isap_a_128_aead_decrypt/32/4096      119423 ns       119423 ns         5861 bytes_per_second=32.965M/s
-isap_bench::isap_k_128a_aead_encrypt/32/64        26548 ns        26548 ns        26363 bytes_per_second=3.44856M/s
-isap_bench::isap_k_128a_aead_decrypt/32/64        26562 ns        26562 ns        26357 bytes_per_second=3.44676M/s
-isap_bench::isap_k_128a_aead_encrypt/32/128       32360 ns        32360 ns        21631 bytes_per_second=4.71534M/s
-isap_bench::isap_k_128a_aead_decrypt/32/128       32376 ns        32375 ns        21621 bytes_per_second=4.71315M/s
-isap_bench::isap_k_128a_aead_encrypt/32/256       42548 ns        42547 ns        16452 bytes_per_second=6.45546M/s
-isap_bench::isap_k_128a_aead_decrypt/32/256       42562 ns        42561 ns        16448 bytes_per_second=6.45333M/s
-isap_bench::isap_k_128a_aead_encrypt/32/512       62918 ns        62918 ns        11124 bytes_per_second=8.24567M/s
-isap_bench::isap_k_128a_aead_decrypt/32/512       62934 ns        62933 ns        11122 bytes_per_second=8.2437M/s
-isap_bench::isap_k_128a_aead_encrypt/32/1024     103667 ns       103665 ns         6752 bytes_per_second=9.71475M/s
-isap_bench::isap_k_128a_aead_decrypt/32/1024     103680 ns       103678 ns         6751 bytes_per_second=9.71349M/s
-isap_bench::isap_k_128a_aead_encrypt/32/2048     186587 ns       186584 ns         3752 bytes_per_second=10.6314M/s
-isap_bench::isap_k_128a_aead_decrypt/32/2048     186606 ns       186603 ns         3751 bytes_per_second=10.6303M/s
-isap_bench::isap_k_128a_aead_encrypt/32/4096     352445 ns       352436 ns         1986 bytes_per_second=11.1701M/s
-isap_bench::isap_k_128a_aead_decrypt/32/4096     352460 ns       352449 ns         1986 bytes_per_second=11.1698M/s
-isap_bench::isap_k_128_aead_encrypt/32/64        191516 ns       191510 ns         3655 bytes_per_second=489.53k/s
-isap_bench::isap_k_128_aead_decrypt/32/64        191538 ns       191528 ns         3655 bytes_per_second=489.484k/s
-isap_bench::isap_k_128_aead_encrypt/32/128       199117 ns       199112 ns         3516 bytes_per_second=784.735k/s
-isap_bench::isap_k_128_aead_decrypt/32/128       199123 ns       199122 ns         3515 bytes_per_second=784.696k/s
-isap_bench::isap_k_128_aead_encrypt/32/256       212417 ns       212416 ns         3295 bytes_per_second=1.29302M/s
-isap_bench::isap_k_128_aead_decrypt/32/256       212436 ns       212435 ns         3295 bytes_per_second=1.2929M/s
-isap_bench::isap_k_128_aead_encrypt/32/512       239059 ns       239050 ns         2928 bytes_per_second=2.17025M/s
-isap_bench::isap_k_128_aead_decrypt/32/512       239068 ns       239066 ns         2928 bytes_per_second=2.1701M/s
-isap_bench::isap_k_128_aead_encrypt/32/1024      292317 ns       292315 ns         2395 bytes_per_second=3.44519M/s
-isap_bench::isap_k_128_aead_decrypt/32/1024      292345 ns       292335 ns         2395 bytes_per_second=3.44495M/s
-isap_bench::isap_k_128_aead_encrypt/32/2048      400720 ns       400715 ns         1747 bytes_per_second=4.95026M/s
-isap_bench::isap_k_128_aead_decrypt/32/2048      400755 ns       400735 ns         1747 bytes_per_second=4.95002M/s
-isap_bench::isap_k_128_aead_encrypt/32/4096      617510 ns       617507 ns         1133 bytes_per_second=6.37526M/s
-isap_bench::isap_k_128_aead_decrypt/32/4096      617511 ns       617507 ns         1134 bytes_per_second=6.37526M/s
+isap_bench::ascon_permutation<1>                   11.8 ns         11.8 ns     59568072 bytes_per_second=3.1703G/s
+isap_bench::ascon_permutation<6>                   44.6 ns         44.6 ns     15696261 bytes_per_second=855.168M/s
+isap_bench::ascon_permutation<12>                  94.0 ns         94.0 ns      7448191 bytes_per_second=405.833M/s
+isap_bench::keccak_permutation<1>                  55.7 ns         55.7 ns     12568042 bytes_per_second=856.012M/s
+isap_bench::keccak_permutation<8>                   389 ns          389 ns      1799601 bytes_per_second=122.564M/s
+isap_bench::keccak_permutation<12>                  576 ns          576 ns      1216016 bytes_per_second=82.8382M/s
+isap_bench::keccak_permutation<16>                  762 ns          762 ns       917148 bytes_per_second=62.5909M/s
+isap_bench::keccak_permutation<20>                  966 ns          966 ns       724681 bytes_per_second=49.3553M/s
+isap_bench::isap_a_128a_aead_encrypt/32/64         4470 ns         4470 ns       156567 bytes_per_second=20.4837M/s
+isap_bench::isap_a_128a_aead_decrypt/32/64         4487 ns         4487 ns       155947 bytes_per_second=20.4051M/s
+isap_bench::isap_a_128a_aead_encrypt/32/128        5582 ns         5582 ns       125442 bytes_per_second=27.3352M/s
+isap_bench::isap_a_128a_aead_decrypt/32/128        5598 ns         5598 ns       125068 bytes_per_second=27.2584M/s
+isap_bench::isap_a_128a_aead_encrypt/32/256        7812 ns         7812 ns        89627 bytes_per_second=35.1592M/s
+isap_bench::isap_a_128a_aead_decrypt/32/256        7826 ns         7826 ns        89462 bytes_per_second=35.0945M/s
+isap_bench::isap_a_128a_aead_encrypt/32/512       12253 ns        12253 ns        57132 bytes_per_second=42.3422M/s
+isap_bench::isap_a_128a_aead_decrypt/32/512       12265 ns        12265 ns        56997 bytes_per_second=42.3006M/s
+isap_bench::isap_a_128a_aead_encrypt/32/1024      21138 ns        21138 ns        33122 bytes_per_second=47.6442M/s
+isap_bench::isap_a_128a_aead_decrypt/32/1024      21154 ns        21153 ns        33097 bytes_per_second=47.6083M/s
+isap_bench::isap_a_128a_aead_encrypt/32/2048      38906 ns        38905 ns        17984 bytes_per_second=50.9865M/s
+isap_bench::isap_a_128a_aead_decrypt/32/2048      38916 ns        38915 ns        17980 bytes_per_second=50.9733M/s
+isap_bench::isap_a_128a_aead_encrypt/32/4096      74471 ns        74470 ns         9402 bytes_per_second=52.8635M/s
+isap_bench::isap_a_128a_aead_decrypt/32/4096      74533 ns        74531 ns         9397 bytes_per_second=52.8204M/s
+isap_bench::isap_a_128_aead_encrypt/32/64         25998 ns        25998 ns        26930 bytes_per_second=3.52151M/s
+isap_bench::isap_a_128_aead_decrypt/32/64         26010 ns        26010 ns        26923 bytes_per_second=3.51995M/s
+isap_bench::isap_a_128_aead_encrypt/32/128        27503 ns        27503 ns        25456 bytes_per_second=5.5481M/s
+isap_bench::isap_a_128_aead_decrypt/32/128        27511 ns        27511 ns        25451 bytes_per_second=5.54647M/s
+isap_bench::isap_a_128_aead_encrypt/32/256        30512 ns        30512 ns        22947 bytes_per_second=9.00178M/s
+isap_bench::isap_a_128_aead_decrypt/32/256        30518 ns        30518 ns        22941 bytes_per_second=8.9999M/s
+isap_bench::isap_a_128_aead_encrypt/32/512        36528 ns        36527 ns        19168 bytes_per_second=14.2032M/s
+isap_bench::isap_a_128_aead_decrypt/32/512        36540 ns        36539 ns        19164 bytes_per_second=14.1984M/s
+isap_bench::isap_a_128_aead_encrypt/32/1024       48553 ns        48552 ns        14412 bytes_per_second=20.7424M/s
+isap_bench::isap_a_128_aead_decrypt/32/1024       48569 ns        48569 ns        14411 bytes_per_second=20.7351M/s
+isap_bench::isap_a_128_aead_encrypt/32/2048       72615 ns        72614 ns         9640 bytes_per_second=27.3177M/s
+isap_bench::isap_a_128_aead_decrypt/32/2048       72622 ns        72620 ns         9619 bytes_per_second=27.3155M/s
+isap_bench::isap_a_128_aead_encrypt/32/4096      120816 ns       120814 ns         5796 bytes_per_second=32.5852M/s
+isap_bench::isap_a_128_aead_decrypt/32/4096      120789 ns       120786 ns         5797 bytes_per_second=32.5929M/s
+isap_bench::isap_k_128a_aead_encrypt/32/64        20498 ns        20498 ns        34154 bytes_per_second=4.46643M/s
+isap_bench::isap_k_128a_aead_decrypt/32/64        20518 ns        20517 ns        34125 bytes_per_second=4.46225M/s
+isap_bench::isap_k_128a_aead_encrypt/32/128       24656 ns        24656 ns        28396 bytes_per_second=6.18861M/s
+isap_bench::isap_k_128a_aead_decrypt/32/128       24671 ns        24670 ns        28370 bytes_per_second=6.18512M/s
+isap_bench::isap_k_128a_aead_encrypt/32/256       31944 ns        31944 ns        21917 bytes_per_second=8.59809M/s
+isap_bench::isap_k_128a_aead_decrypt/32/256       31966 ns        31965 ns        21909 bytes_per_second=8.5924M/s
+isap_bench::isap_k_128a_aead_encrypt/32/512       46524 ns        46523 ns        15049 bytes_per_second=11.1514M/s
+isap_bench::isap_k_128a_aead_decrypt/32/512       46534 ns        46533 ns        15038 bytes_per_second=11.149M/s
+isap_bench::isap_k_128a_aead_encrypt/32/1024      75685 ns        75683 ns         9251 bytes_per_second=13.3065M/s
+isap_bench::isap_k_128a_aead_decrypt/32/1024      75705 ns        75703 ns         9248 bytes_per_second=13.303M/s
+isap_bench::isap_k_128a_aead_encrypt/32/2048     135007 ns       135006 ns         5186 bytes_per_second=14.693M/s
+isap_bench::isap_k_128a_aead_decrypt/32/2048     135038 ns       135035 ns         5185 bytes_per_second=14.6898M/s
+isap_bench::isap_k_128a_aead_encrypt/32/4096     253685 ns       253683 ns         2760 bytes_per_second=15.5184M/s
+isap_bench::isap_k_128a_aead_decrypt/32/4096     253689 ns       253684 ns         2759 bytes_per_second=15.5184M/s
+isap_bench::isap_k_128_aead_encrypt/32/64        148372 ns       148370 ns         4713 bytes_per_second=631.866k/s
+isap_bench::isap_k_128_aead_decrypt/32/64        148396 ns       148395 ns         4712 bytes_per_second=631.761k/s
+isap_bench::isap_k_128_aead_encrypt/32/128       153871 ns       153870 ns         4549 bytes_per_second=1015.47k/s
+isap_bench::isap_k_128_aead_decrypt/32/128       153888 ns       153887 ns         4549 bytes_per_second=1015.36k/s
+isap_bench::isap_k_128_aead_encrypt/32/256       163488 ns       163478 ns         4283 bytes_per_second=1.68009M/s
+isap_bench::isap_k_128_aead_decrypt/32/256       163493 ns       163492 ns         4283 bytes_per_second=1.67995M/s
+isap_bench::isap_k_128_aead_encrypt/32/512       182682 ns       182675 ns         3833 bytes_per_second=2.84001M/s
+isap_bench::isap_k_128_aead_decrypt/32/512       182696 ns       182695 ns         3832 bytes_per_second=2.8397M/s
+isap_bench::isap_k_128_aead_encrypt/32/1024      221041 ns       221037 ns         3167 bytes_per_second=4.55616M/s
+isap_bench::isap_k_128_aead_decrypt/32/1024      221056 ns       221054 ns         3167 bytes_per_second=4.55581M/s
+isap_bench::isap_k_128_aead_encrypt/32/2048      299183 ns       299177 ns         2339 bytes_per_second=6.63032M/s
+isap_bench::isap_k_128_aead_decrypt/32/2048      299269 ns       299267 ns         2340 bytes_per_second=6.62833M/s
+isap_bench::isap_k_128_aead_encrypt/32/4096      455622 ns       455602 ns         1537 bytes_per_second=8.64081M/s
+isap_bench::isap_k_128_aead_decrypt/32/4096      455639 ns       455636 ns         1537 bytes_per_second=8.64016M/s
 ```
 
 ### On Intel(R) Core(TM) i5-8279U CPU @ 2.40GHz
 
 ```fish
-2022-06-24T13:05:27+04:00
+2022-06-26T12:10:42+04:00
 Running ./bench/a.out
 Run on (8 X 2400 MHz CPU s)
 CPU Caches:
@@ -262,74 +262,74 @@ CPU Caches:
   L1 Instruction 32 KiB
   L2 Unified 256 KiB (x4)
   L3 Unified 6144 KiB
-Load Average: 1.91, 2.07, 2.15
+Load Average: 2.22, 2.30, 2.09
 -------------------------------------------------------------------------------------------------------
 Benchmark                                             Time             CPU   Iterations UserCounters...
 -------------------------------------------------------------------------------------------------------
-isap_bench::ascon_permutation<1>                   4.63 ns         4.63 ns    137327605 bytes_per_second=8.05435G/s
-isap_bench::ascon_permutation<6>                   25.7 ns         25.6 ns     28171962 bytes_per_second=1.45751G/s
-isap_bench::ascon_permutation<12>                  49.4 ns         48.7 ns     14675391 bytes_per_second=782.949M/s
-isap_bench::keccak_permutation<1>                  39.9 ns         39.7 ns     17469036 bytes_per_second=1.17434G/s
-isap_bench::keccak_permutation<8>                   333 ns          330 ns      2252658 bytes_per_second=144.371M/s
-isap_bench::keccak_permutation<12>                  478 ns          476 ns      1389137 bytes_per_second=100.227M/s
-isap_bench::keccak_permutation<16>                  609 ns          609 ns      1122029 bytes_per_second=78.3257M/s
-isap_bench::keccak_permutation<20>                  774 ns          773 ns       894980 bytes_per_second=61.7132M/s
-isap_bench::isap_a_128a_aead_encrypt/32/64         2295 ns         2293 ns       304007 bytes_per_second=39.9247M/s
-isap_bench::isap_a_128a_aead_decrypt/32/64         2301 ns         2298 ns       304764 bytes_per_second=39.8406M/s
-isap_bench::isap_a_128a_aead_encrypt/32/128        2896 ns         2891 ns       238422 bytes_per_second=52.7876M/s
-isap_bench::isap_a_128a_aead_decrypt/32/128        2884 ns         2883 ns       241968 bytes_per_second=52.9317M/s
-isap_bench::isap_a_128a_aead_encrypt/32/256        4055 ns         4053 ns       173251 bytes_per_second=67.766M/s
-isap_bench::isap_a_128a_aead_decrypt/32/256        4049 ns         4046 ns       171816 bytes_per_second=67.8795M/s
-isap_bench::isap_a_128a_aead_encrypt/32/512        6384 ns         6381 ns       106678 bytes_per_second=81.3034M/s
-isap_bench::isap_a_128a_aead_decrypt/32/512        6382 ns         6378 ns       107638 bytes_per_second=81.3393M/s
-isap_bench::isap_a_128a_aead_encrypt/32/1024      10971 ns        10967 ns        62245 bytes_per_second=91.8278M/s
-isap_bench::isap_a_128a_aead_decrypt/32/1024      11007 ns        11001 ns        62401 bytes_per_second=91.5447M/s
-isap_bench::isap_a_128a_aead_encrypt/32/2048      20567 ns        20551 ns        34301 bytes_per_second=96.5237M/s
-isap_bench::isap_a_128a_aead_decrypt/32/2048      20387 ns        20366 ns        34122 bytes_per_second=97.4005M/s
-isap_bench::isap_a_128a_aead_encrypt/32/4096      39082 ns        39059 ns        17766 bytes_per_second=100.789M/s
-isap_bench::isap_a_128a_aead_decrypt/32/4096      39160 ns        39124 ns        17897 bytes_per_second=100.622M/s
-isap_bench::isap_a_128_aead_encrypt/32/64         12920 ns        12908 ns        52971 bytes_per_second=7.09257M/s
-isap_bench::isap_a_128_aead_decrypt/32/64         12913 ns        12902 ns        53367 bytes_per_second=7.09592M/s
-isap_bench::isap_a_128_aead_encrypt/32/128        13677 ns        13671 ns        50618 bytes_per_second=11.1617M/s
-isap_bench::isap_a_128_aead_decrypt/32/128        13690 ns        13681 ns        50957 bytes_per_second=11.1533M/s
-isap_bench::isap_a_128_aead_encrypt/32/256        15151 ns        15143 ns        45569 bytes_per_second=18.1381M/s
-isap_bench::isap_a_128_aead_decrypt/32/256        15106 ns        15099 ns        45336 bytes_per_second=18.1902M/s
-isap_bench::isap_a_128_aead_encrypt/32/512        18155 ns        18142 ns        37710 bytes_per_second=28.5968M/s
-isap_bench::isap_a_128_aead_decrypt/32/512        18195 ns        18182 ns        37259 bytes_per_second=28.5342M/s
-isap_bench::isap_a_128_aead_encrypt/32/1024       24287 ns        24267 ns        28809 bytes_per_second=41.5002M/s
-isap_bench::isap_a_128_aead_decrypt/32/1024       24389 ns        24360 ns        28726 bytes_per_second=41.3421M/s
-isap_bench::isap_a_128_aead_encrypt/32/2048       36168 ns        36147 ns        19143 bytes_per_second=54.8773M/s
-isap_bench::isap_a_128_aead_decrypt/32/2048       36280 ns        36258 ns        19019 bytes_per_second=54.7087M/s
-isap_bench::isap_a_128_aead_encrypt/32/4096       60532 ns        60487 ns        11274 bytes_per_second=65.0844M/s
-isap_bench::isap_a_128_aead_decrypt/32/4096       61136 ns        61086 ns        11281 bytes_per_second=64.446M/s
-isap_bench::isap_k_128a_aead_encrypt/32/64        17151 ns        17141 ns        40655 bytes_per_second=5.34109M/s
-isap_bench::isap_k_128a_aead_decrypt/32/64        17067 ns        17055 ns        39939 bytes_per_second=5.36809M/s
-isap_bench::isap_k_128a_aead_encrypt/32/128       20768 ns        20752 ns        33295 bytes_per_second=7.35286M/s
-isap_bench::isap_k_128a_aead_decrypt/32/128       20724 ns        20711 ns        33455 bytes_per_second=7.36742M/s
-isap_bench::isap_k_128a_aead_encrypt/32/256       27136 ns        27126 ns        25445 bytes_per_second=10.1254M/s
-isap_bench::isap_k_128a_aead_decrypt/32/256       27342 ns        27327 ns        25362 bytes_per_second=10.0508M/s
-isap_bench::isap_k_128a_aead_encrypt/32/512       40599 ns        40562 ns        17303 bytes_per_second=12.7902M/s
-isap_bench::isap_k_128a_aead_decrypt/32/512       40235 ns        40196 ns        17323 bytes_per_second=12.9068M/s
-isap_bench::isap_k_128a_aead_encrypt/32/1024      65903 ns        65881 ns        10221 bytes_per_second=15.2864M/s
-isap_bench::isap_k_128a_aead_decrypt/32/1024      66027 ns        65993 ns        10128 bytes_per_second=15.2605M/s
-isap_bench::isap_k_128a_aead_encrypt/32/2048     118771 ns       118685 ns         5810 bytes_per_second=16.7136M/s
-isap_bench::isap_k_128a_aead_decrypt/32/2048     119455 ns       119371 ns         5839 bytes_per_second=16.6174M/s
-isap_bench::isap_k_128a_aead_encrypt/32/4096     224535 ns       224396 ns         3115 bytes_per_second=17.5438M/s
-isap_bench::isap_k_128a_aead_decrypt/32/4096     223915 ns       223773 ns         3101 bytes_per_second=17.5927M/s
-isap_bench::isap_k_128_aead_encrypt/32/64        125791 ns       125707 ns         5489 bytes_per_second=745.779k/s
-isap_bench::isap_k_128_aead_decrypt/32/64        125646 ns       125603 ns         5471 bytes_per_second=746.4k/s
-isap_bench::isap_k_128_aead_encrypt/32/128       130883 ns       130792 ns         5210 bytes_per_second=1.16664M/s
-isap_bench::isap_k_128_aead_decrypt/32/128       131299 ns       131189 ns         5263 bytes_per_second=1.16311M/s
-isap_bench::isap_k_128_aead_encrypt/32/256       139498 ns       139453 ns         4917 bytes_per_second=1.96953M/s
-isap_bench::isap_k_128_aead_decrypt/32/256       139817 ns       139755 ns         4960 bytes_per_second=1.96529M/s
-isap_bench::isap_k_128_aead_encrypt/32/512       156481 ns       156402 ns         4433 bytes_per_second=3.31709M/s
-isap_bench::isap_k_128_aead_decrypt/32/512       157513 ns       157370 ns         4413 bytes_per_second=3.29669M/s
-isap_bench::isap_k_128_aead_encrypt/32/1024      202944 ns       199982 ns         3626 bytes_per_second=5.03587M/s
-isap_bench::isap_k_128_aead_decrypt/32/1024      190851 ns       190740 ns         3590 bytes_per_second=5.27987M/s
-isap_bench::isap_k_128_aead_encrypt/32/2048      260141 ns       260021 ns         2659 bytes_per_second=7.62878M/s
-isap_bench::isap_k_128_aead_decrypt/32/2048      260383 ns       260305 ns         2661 bytes_per_second=7.62045M/s
-isap_bench::isap_k_128_aead_encrypt/32/4096      402613 ns       402320 ns         1735 bytes_per_second=9.78515M/s
-isap_bench::isap_k_128_aead_decrypt/32/4096      405033 ns       404202 ns         1745 bytes_per_second=9.73961M/s
+isap_bench::ascon_permutation<1>                   4.66 ns         4.66 ns    150606298 bytes_per_second=7.99572G/s
+isap_bench::ascon_permutation<6>                   25.0 ns         25.0 ns     28107370 bytes_per_second=1.48914G/s
+isap_bench::ascon_permutation<12>                  45.3 ns         45.3 ns     15591207 bytes_per_second=842.945M/s
+isap_bench::keccak_permutation<1>                  38.5 ns         38.5 ns     18104744 bytes_per_second=1.20933G/s
+isap_bench::keccak_permutation<8>                   307 ns          306 ns      2266729 bytes_per_second=155.626M/s
+isap_bench::keccak_permutation<12>                  461 ns          461 ns      1522941 bytes_per_second=103.412M/s
+isap_bench::keccak_permutation<16>                  650 ns          646 ns      1089596 bytes_per_second=73.8475M/s
+isap_bench::keccak_permutation<20>                  836 ns          825 ns       866465 bytes_per_second=57.7894M/s
+isap_bench::isap_a_128a_aead_encrypt/32/64         2546 ns         2520 ns       280221 bytes_per_second=36.3316M/s
+isap_bench::isap_a_128a_aead_decrypt/32/64         2496 ns         2469 ns       291929 bytes_per_second=37.0794M/s
+isap_bench::isap_a_128a_aead_encrypt/32/128        3023 ns         3003 ns       225080 bytes_per_second=50.8185M/s
+isap_bench::isap_a_128a_aead_decrypt/32/128        3207 ns         3178 ns       227338 bytes_per_second=48.0148M/s
+isap_bench::isap_a_128a_aead_encrypt/32/256        4437 ns         4403 ns       158906 bytes_per_second=62.3736M/s
+isap_bench::isap_a_128a_aead_decrypt/32/256        4344 ns         4316 ns       158964 bytes_per_second=63.6439M/s
+isap_bench::isap_a_128a_aead_encrypt/32/512        6988 ns         6911 ns        97153 bytes_per_second=75.0653M/s
+isap_bench::isap_a_128a_aead_decrypt/32/512        7680 ns         7578 ns       101823 bytes_per_second=68.4572M/s
+isap_bench::isap_a_128a_aead_encrypt/32/1024      11459 ns        11397 ns        53232 bytes_per_second=88.3625M/s
+isap_bench::isap_a_128a_aead_decrypt/32/1024      11087 ns        11070 ns        61685 bytes_per_second=90.9778M/s
+isap_bench::isap_a_128a_aead_encrypt/32/2048      20549 ns        20522 ns        34125 bytes_per_second=96.6607M/s
+isap_bench::isap_a_128a_aead_decrypt/32/2048      20448 ns        20426 ns        34060 bytes_per_second=97.1119M/s
+isap_bench::isap_a_128a_aead_encrypt/32/4096      39218 ns        39184 ns        17918 bytes_per_second=100.469M/s
+isap_bench::isap_a_128a_aead_decrypt/32/4096      41514 ns        41070 ns        17937 bytes_per_second=95.8558M/s
+isap_bench::isap_a_128_aead_encrypt/32/64         13308 ns        13209 ns        53181 bytes_per_second=6.93093M/s
+isap_bench::isap_a_128_aead_decrypt/32/64         13142 ns        13098 ns        48801 bytes_per_second=6.99004M/s
+isap_bench::isap_a_128_aead_encrypt/32/128        13553 ns        13548 ns        50854 bytes_per_second=11.2628M/s
+isap_bench::isap_a_128_aead_decrypt/32/128        15178 ns        14836 ns        50304 bytes_per_second=10.2848M/s
+isap_bench::isap_a_128_aead_encrypt/32/256        16453 ns        16377 ns        42951 bytes_per_second=16.7714M/s
+isap_bench::isap_a_128_aead_decrypt/32/256        16222 ns        16195 ns        43256 bytes_per_second=16.9594M/s
+isap_bench::isap_a_128_aead_encrypt/32/512        18535 ns        18519 ns        37043 bytes_per_second=28.0152M/s
+isap_bench::isap_a_128_aead_decrypt/32/512        18992 ns        18886 ns        37141 bytes_per_second=27.4694M/s
+isap_bench::isap_a_128_aead_encrypt/32/1024       24690 ns        24591 ns        27837 bytes_per_second=40.9538M/s
+isap_bench::isap_a_128_aead_decrypt/32/1024       24552 ns        24456 ns        26591 bytes_per_second=41.1794M/s
+isap_bench::isap_a_128_aead_encrypt/32/2048       36340 ns        36299 ns        19007 bytes_per_second=54.6472M/s
+isap_bench::isap_a_128_aead_decrypt/32/2048       37025 ns        36835 ns        19031 bytes_per_second=53.8517M/s
+isap_bench::isap_a_128_aead_encrypt/32/4096       61743 ns        61488 ns        10881 bytes_per_second=64.025M/s
+isap_bench::isap_a_128_aead_decrypt/32/4096       61934 ns        61859 ns        11142 bytes_per_second=63.6414M/s
+isap_bench::isap_k_128a_aead_encrypt/32/64        17656 ns        17553 ns        39928 bytes_per_second=5.21566M/s
+isap_bench::isap_k_128a_aead_decrypt/32/64        17320 ns        17299 ns        39432 bytes_per_second=5.29233M/s
+isap_bench::isap_k_128a_aead_encrypt/32/128       21038 ns        21010 ns        32599 bytes_per_second=7.26265M/s
+isap_bench::isap_k_128a_aead_decrypt/32/128       21226 ns        21204 ns        32503 bytes_per_second=7.19627M/s
+isap_bench::isap_k_128a_aead_encrypt/32/256       27833 ns        27772 ns        25088 bytes_per_second=9.88961M/s
+isap_bench::isap_k_128a_aead_decrypt/32/256       27381 ns        27333 ns        25311 bytes_per_second=10.0486M/s
+isap_bench::isap_k_128a_aead_encrypt/32/512       40480 ns        40434 ns        17273 bytes_per_second=12.8307M/s
+isap_bench::isap_k_128a_aead_decrypt/32/512       40945 ns        40788 ns        17328 bytes_per_second=12.7194M/s
+isap_bench::isap_k_128a_aead_encrypt/32/1024      67781 ns        67525 ns         9852 bytes_per_second=14.9141M/s
+isap_bench::isap_k_128a_aead_decrypt/32/1024      69663 ns        69524 ns        10026 bytes_per_second=14.4855M/s
+isap_bench::isap_k_128a_aead_encrypt/32/2048     121428 ns       121208 ns         5723 bytes_per_second=16.3656M/s
+isap_bench::isap_k_128a_aead_decrypt/32/2048     120820 ns       120695 ns         5692 bytes_per_second=16.4352M/s
+isap_bench::isap_k_128a_aead_encrypt/32/4096     232192 ns       231664 ns         3042 bytes_per_second=16.9934M/s
+isap_bench::isap_k_128a_aead_decrypt/32/4096     226828 ns       226572 ns         3080 bytes_per_second=17.3754M/s
+isap_bench::isap_k_128_aead_encrypt/32/64        126093 ns       126000 ns         5434 bytes_per_second=744.049k/s
+isap_bench::isap_k_128_aead_decrypt/32/64        127197 ns       127117 ns         5392 bytes_per_second=737.507k/s
+isap_bench::isap_k_128_aead_encrypt/32/128       159141 ns       134861 ns         4856 bytes_per_second=1.13144M/s
+isap_bench::isap_k_128_aead_decrypt/32/128       132097 ns       132006 ns         5248 bytes_per_second=1.15592M/s
+isap_bench::isap_k_128_aead_encrypt/32/256       140463 ns       140303 ns         4843 bytes_per_second=1.95761M/s
+isap_bench::isap_k_128_aead_decrypt/32/256       140596 ns       140527 ns         4879 bytes_per_second=1.95448M/s
+isap_bench::isap_k_128_aead_encrypt/32/512       156515 ns       156438 ns         4400 bytes_per_second=3.31632M/s
+isap_bench::isap_k_128_aead_decrypt/32/512       157533 ns       157390 ns         4423 bytes_per_second=3.29626M/s
+isap_bench::isap_k_128_aead_encrypt/32/1024      191687 ns       191563 ns         3620 bytes_per_second=5.25717M/s
+isap_bench::isap_k_128_aead_decrypt/32/1024      190969 ns       190890 ns         3615 bytes_per_second=5.27572M/s
+isap_bench::isap_k_128_aead_encrypt/32/2048      261217 ns       261097 ns         2655 bytes_per_second=7.59735M/s
+isap_bench::isap_k_128_aead_decrypt/32/2048      262864 ns       262307 ns         2644 bytes_per_second=7.56228M/s
+isap_bench::isap_k_128_aead_encrypt/32/4096      401578 ns       401373 ns         1734 bytes_per_second=9.80826M/s
+isap_bench::isap_k_128_aead_decrypt/32/4096      403449 ns       403179 ns         1734 bytes_per_second=9.76431M/s
 ```
 
 ## Usage
