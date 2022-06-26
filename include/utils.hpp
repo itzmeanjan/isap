@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
+#include <type_traits>
 
 // Compile-time check to ensure # -of rounds Ascon-p/ Keccak-p[400] permutation
 // to be applied, is lesser than or equal to `n`
@@ -28,13 +29,14 @@ to_hex(const uint8_t* const bytes, const size_t len)
   return ss.str();
 }
 
-// Generates N -many random bytes | N >= 0
+// Generates N -many random elements of type T | N >= 0
+template<typename T>
 inline static void
-random_data(uint8_t* const data, const size_t dlen)
+random_data(T* const data, const size_t dlen) requires(std::is_integral_v<T>)
 {
   std::random_device rd;
   std::mt19937_64 gen(rd());
-  std::uniform_int_distribution<uint8_t> dis;
+  std::uniform_int_distribution<T> dis;
 
   for (size_t i = 0; i < dlen; i++) {
     data[i] = dis(gen);
