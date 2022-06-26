@@ -22,10 +22,10 @@ isap_a_128_aead_encrypt(benchmark::State& state)
   uint8_t* enc = static_cast<uint8_t*>(std::malloc(mlen));
   uint8_t* dec = static_cast<uint8_t*>(std::malloc(mlen));
 
-  random_data(key, 16);
-  random_data(nonce, 16);
-  random_data(data, dlen);
-  random_data(txt, mlen);
+  random_data<uint8_t>(key, 16);
+  random_data<uint8_t>(nonce, 16);
+  random_data<uint8_t>(data, dlen);
+  random_data<uint8_t>(txt, mlen);
 
   std::memset(tag, 0, 16);
   std::memset(enc, 0, mlen);
@@ -80,10 +80,10 @@ isap_a_128_aead_decrypt(benchmark::State& state)
   uint8_t* enc = static_cast<uint8_t*>(std::malloc(mlen));
   uint8_t* dec = static_cast<uint8_t*>(std::malloc(mlen));
 
-  random_data(key, 16);
-  random_data(nonce, 16);
-  random_data(data, dlen);
-  random_data(txt, mlen);
+  random_data<uint8_t>(key, 16);
+  random_data<uint8_t>(nonce, 16);
+  random_data<uint8_t>(data, dlen);
+  random_data<uint8_t>(txt, mlen);
 
   std::memset(tag, 0, 16);
   std::memset(enc, 0, mlen);

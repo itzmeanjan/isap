@@ -23,10 +23,10 @@ main()
   uint8_t* dec = static_cast<uint8_t*>(std::malloc(sizeof(uint8_t) * mlen));
 
   // generate random bytes
-  random_data(key, kntlen);
-  random_data(nonce, kntlen);
-  random_data(data, dlen);
-  random_data(txt, mlen);
+  random_data<uint8_t>(key, kntlen);
+  random_data<uint8_t>(nonce, kntlen);
+  random_data<uint8_t>(data, dlen);
+  random_data<uint8_t>(txt, mlen);
 
   // clear memory allocations
   std::memset(tag, 0, kntlen);
