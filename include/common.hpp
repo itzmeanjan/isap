@@ -66,7 +66,7 @@ rekeying(const uint8_t* const __restrict key,
   if constexpr (p == ASCON) {
     // --- begin initialization ---
 
-    uint64_t state[5];
+    uint64_t state[5] = {};
 
     state[0] = (static_cast<uint64_t>(key[0]) << 56) |
                (static_cast<uint64_t>(key[1]) << 48) |
@@ -106,9 +106,6 @@ rekeying(const uint8_t* const __restrict key,
                  (static_cast<uint64_t>(IV_KA[7]) << 0);
     }
 
-    state[3] = 0ul;
-    state[4] = 0ul;
-
     ascon::permute<s_k>(state);
 
     // --- end initialization ---
@@ -136,6 +133,12 @@ rekeying(const uint8_t* const __restrict key,
 
     // --- begin squeezing ---
 
+#if defined __clang__
+#pragma unroll 16
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 16
+#endif
     for (size_t i = 0; i < z; i++) {
       const size_t soff = i >> 3;
       const size_t boff = (7 - (i & 7)) << 3;
@@ -150,6 +153,12 @@ rekeying(const uint8_t* const __restrict key,
 
     uint16_t state[25] = {};
 
+#if defined __clang__
+#pragma unroll 8
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 8
+#endif
     for (size_t i = 0; i < 8; i++) {
       const size_t koff = i << 1;
 
@@ -160,19 +169,31 @@ rekeying(const uint8_t* const __restrict key,
     if constexpr (f == ENC) {
       constexpr size_t soff = 8;
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 4
+#endif
       for (size_t i = 0; i < 4; i++) {
         const size_t ivoff = i << 1;
 
-        state[soff + i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
+        state[soff ^ i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
                           (static_cast<uint16_t>(IV_KE[ivoff ^ 0]) << 0);
       }
     } else if constexpr (f == MAC) {
       constexpr size_t soff = 8;
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 4
+#endif
       for (size_t i = 0; i < 4; i++) {
         const size_t ivoff = i << 1;
 
-        state[soff + i] = (static_cast<uint16_t>(IV_KA[ivoff ^ 1]) << 8) |
+        state[soff ^ i] = (static_cast<uint16_t>(IV_KA[ivoff ^ 1]) << 8) |
                           (static_cast<uint16_t>(IV_KA[ivoff ^ 0]) << 0);
       }
     }
@@ -330,6 +351,13 @@ enc(const uint8_t* const __restrict key,
     }
 
     constexpr size_t soff = z >> 1;
+
+#if defined __clang__
+#pragma unroll 8
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 8
+#endif
     for (size_t i = 0; i < 8; i++) {
       const size_t noff = i << 1;
 
@@ -394,7 +422,7 @@ mac(const uint8_t* const __restrict key,
   if constexpr (p == ASCON) {
     // --- begin initialization ---
 
-    uint64_t state[5];
+    uint64_t state[5] = {};
 
     state[0] = (static_cast<uint64_t>(nonce[0]) << 56) |
                (static_cast<uint64_t>(nonce[1]) << 48) |
@@ -422,9 +450,6 @@ mac(const uint8_t* const __restrict key,
                (static_cast<uint64_t>(IV_A[5]) << 16) |
                (static_cast<uint64_t>(IV_A[6]) << 8) |
                (static_cast<uint64_t>(IV_A[7]) << 0);
-
-    state[3] = 0ul;
-    state[4] = 0ul;
 
     ascon::permute<s_h>(state);
 
@@ -566,6 +591,12 @@ mac(const uint8_t* const __restrict key,
 
     uint16_t state[25] = {};
 
+#if defined __clang__
+#pragma unroll 8
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 8
+#endif
     for (size_t i = 0; i < 8; i++) {
       const size_t noff = i << 1;
 
@@ -574,6 +605,13 @@ mac(const uint8_t* const __restrict key,
     }
 
     constexpr size_t soff = 8;
+
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 4
+#endif
     for (size_t i = 0; i < 4; i++) {
       const size_t ivoff = i << 1;
 
@@ -672,6 +710,12 @@ mac(const uint8_t* const __restrict key,
     uint8_t y[knt_len];
     uint8_t skey[knt_len];
 
+#if defined __clang__
+#pragma unroll 16
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 16
+#endif
     for (size_t i = 0; i < knt_len; i++) {
       y[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
     }

@@ -36,6 +36,12 @@ theta(uint16_t* const state)
   uint16_t c[5];
   uint16_t d[5];
 
+#if defined __clang__
+#pragma unroll 5
+#elif defined __GNUG__
+#pragma GCC unroll 5
+#pragma GCC ivdep
+#endif
   for (size_t x = 0; x < 5; x++) {
     const uint16_t t0 = state[x] ^ state[x + 5];
     const uint16_t t1 = state[x + 10] ^ state[x + 15];
@@ -44,12 +50,24 @@ theta(uint16_t* const state)
     c[x] = t2;
   }
 
+#if defined __clang__
+#pragma unroll 4
+#elif defined __GNUG__
+#pragma GCC unroll 4
+#pragma GCC ivdep
+#endif
   for (size_t x = 1; x < 5; x++) {
     d[x] = c[x - 1] ^ std::rotl(c[(x + 1) % 5], 1);
   }
 
   d[0] = c[4] ^ std::rotl(c[1], 1);
 
+#if defined __clang__
+#pragma unroll 5
+#elif defined __GNUG__
+#pragma GCC unroll 5
+#pragma GCC ivdep
+#endif
   for (size_t x = 0; x < 5; x++) {
     state[x + 0] ^= d[x];
     state[x + 5] ^= d[x];
@@ -64,6 +82,12 @@ theta(uint16_t* const state)
 inline static void
 rho(uint16_t* const state)
 {
+#if defined __clang__
+#pragma unroll 24
+#elif defined __GNUG__
+#pragma GCC unroll 24
+#pragma GCC ivdep
+#endif
   for (size_t i = 1; i < 25; i++) {
     state[i] = std::rotl(state[i], ROT[i - 1]);
   }
@@ -75,8 +99,17 @@ inline static void
 pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 {
   for (size_t y = 0; y < 5; y++) {
+    const size_t yoff5 = y * 5;
+    const size_t yoff3 = y * 3;
+
+#if defined __clang__
+#pragma unroll 5
+#elif defined __GNUG__
+#pragma GCC unroll 5
+#pragma GCC ivdep
+#endif
     for (size_t x = 0; x < 5; x++) {
-      state_out[y * 5 + x] = state_in[5 * x + (x + 3 * y) % 5];
+      state_out[yoff5 + x] = state_in[5 * x + (x + yoff3) % 5];
     }
   }
 }
@@ -89,6 +122,12 @@ chi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
   for (size_t y = 0; y < 5; y++) {
     const size_t yoff = y * 5;
 
+#if defined __clang__
+#pragma unroll 5
+#elif defined __GNUG__
+#pragma GCC unroll 5
+#pragma GCC ivdep
+#endif
     for (size_t x = 0; x < 5; x++) {
       const size_t x0 = (x + 1) % 5;
       const size_t x1 = (x + 2) % 5;
