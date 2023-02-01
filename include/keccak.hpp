@@ -34,7 +34,7 @@ constexpr uint16_t RC[MAX_ROUNDS]{ 1,     32898, 32906, 32768, 32907,
 static inline void
 theta(uint16_t* const state)
 {
-  uint16_t c[5];
+  uint16_t c[5]{}; // initialization with zeros is important
   uint16_t d[5];
 
 #if defined __clang__
@@ -44,25 +44,19 @@ theta(uint16_t* const state)
 #pragma GCC ivdep
 #pragma GCC unroll 5
 #endif
-  for (size_t x = 0; x < 5; x++) {
-    const uint16_t t0 = state[x] ^ state[x + 5];
-    const uint16_t t1 = state[x + 10] ^ state[x + 15];
-    const uint16_t t2 = t0 ^ t1 ^ state[x + 20];
-
-    c[x] = t2;
-  }
-
-#if defined __clang__
-#pragma unroll 4
-#elif defined __GNUG__
-#pragma GCC unroll 4
-#pragma GCC ivdep
-#endif
-  for (size_t x = 1; x < 5; x++) {
-    d[x] = c[x - 1] ^ std::rotl(c[(x + 1) % 5], 1);
+  for (size_t x = 0; x < 25; x += 5) {
+    c[0] ^= state[x + 0];
+    c[1] ^= state[x + 1];
+    c[2] ^= state[x + 2];
+    c[3] ^= state[x + 3];
+    c[4] ^= state[x + 4];
   }
 
   d[0] = c[4] ^ std::rotl(c[1], 1);
+  d[1] = c[0] ^ std::rotl(c[2], 1);
+  d[2] = c[1] ^ std::rotl(c[3], 1);
+  d[3] = c[2] ^ std::rotl(c[4], 1);
+  d[4] = c[3] ^ std::rotl(c[0], 1);
 
 #if defined __clang__
 #pragma clang loop unroll(enable)
@@ -71,12 +65,12 @@ theta(uint16_t* const state)
 #pragma GCC ivdep
 #pragma GCC unroll 5
 #endif
-  for (size_t x = 0; x < 5; x++) {
-    state[x + 0] ^= d[x];
-    state[x + 5] ^= d[x];
-    state[x + 10] ^= d[x];
-    state[x + 15] ^= d[x];
-    state[x + 20] ^= d[x];
+  for (size_t x = 0; x < 25; x += 5) {
+    state[x + 0] ^= d[0];
+    state[x + 1] ^= d[1];
+    state[x + 2] ^= d[2];
+    state[x + 3] ^= d[3];
+    state[x + 4] ^= d[4];
   }
 }
 
