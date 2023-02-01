@@ -12,12 +12,12 @@ constexpr size_t MAX_ROUNDS = 12;
 
 // Ascon-p round constants; taken from table A.2 in ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr uint64_t RC[MAX_ROUNDS] = {
-  0x00000000000000f0ul, 0x00000000000000e1ul, 0x00000000000000d2ul,
-  0x00000000000000c3ul, 0x00000000000000b4ul, 0x00000000000000a5ul,
-  0x0000000000000096ul, 0x0000000000000087ul, 0x0000000000000078ul,
-  0x0000000000000069ul, 0x000000000000005aul, 0x000000000000004bul
-};
+constexpr uint64_t RC[MAX_ROUNDS]{ 0x00000000000000f0ul, 0x00000000000000e1ul,
+                                   0x00000000000000d2ul, 0x00000000000000c3ul,
+                                   0x00000000000000b4ul, 0x00000000000000a5ul,
+                                   0x0000000000000096ul, 0x0000000000000087ul,
+                                   0x0000000000000078ul, 0x0000000000000069ul,
+                                   0x000000000000005aul, 0x000000000000004bul };
 
 // Addition of constants step; see appendix A of ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
