@@ -22,6 +22,22 @@ constexpr size_t ROT[24]{ 1 & 15,   190 & 15, 28 & 15,  91 & 15,  36 & 15,
                           45 & 15,  15 & 15,  21 & 15,  136 & 15, 210 & 15,
                           66 & 15,  253 & 15, 120 & 15, 78 & 15 };
 
+// Precomputed table used for looking up source index during application of π
+// step mapping function on keccak-p[400] state
+//
+// print('to <= from')
+// for y in range(5):
+//    for x in range(5):
+//        print(f'{y * 5 + x} <= {x * 5 + (x + 3 * y) % 5}')
+//
+// Table generated using above Python code snippet. See section 3.2.3 of the
+// specification https://dx.doi.org/10.6028/NIST.FIPS.202
+//
+// Taken from
+// https://github.com/itzmeanjan/sha3/blob/b5e897ed8002c94569a5d7433f65ba606880ac12/include/keccak.hpp#L37-L48
+constexpr size_t PERM[]{ 0,  6,  12, 18, 24, 3,  9,  10, 16, 22, 1,  7, 13,
+                         19, 20, 4,  5,  11, 17, 23, 2,  8,  14, 15, 21 };
+
 // Round constants to be XORed with lane (0, 0) of keccak-p[400] permutation
 // state, see section 3.2.5 of http://dx.doi.org/10.6028/NIST.FIPS.202
 constexpr uint16_t RC[MAX_ROUNDS]{ 1,     32898, 32906, 32768, 32907,
@@ -96,20 +112,15 @@ rho(uint16_t* const state)
 static inline void
 pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 {
-  for (size_t y = 0; y < 5; y++) {
-    const size_t yoff5 = y * 5;
-    const size_t yoff3 = y * 3;
-
 #if defined __clang__
 #pragma clang loop unroll(enable)
 #pragma clang loop vectorize(enable)
-#elif defined __GNUG__
+#elif defined __GNUC__
 #pragma GCC ivdep
-#pragma GCC unroll 5
+#pragma GCC unroll 25
 #endif
-    for (size_t x = 0; x < 5; x++) {
-      state_out[yoff5 + x] = state_in[5 * x + (x + yoff3) % 5];
-    }
+  for (size_t i = 0; i < 25; i++) {
+    state_out[i] = state_in[PERM[i]];
   }
 }
 
