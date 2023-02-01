@@ -7,14 +7,14 @@
 namespace isap_common {
 
 // Which permutation is being used for AEAD scheme
-enum perm_t
+enum class perm_t : uint32_t
 {
   ASCON, // Ascon-p used in ISAP-A-128{A}
   KECCAK // Keccak-p[400] used in ISAP-K-128{A}
 };
 
 // Generate session key for encryption/ authentication operation
-enum rk_flag_t
+enum class rk_flag_t : uint32_t
 {
   ENC, // encryption mode
   MAC  // authentication mode
@@ -23,7 +23,7 @@ enum rk_flag_t
 // Ascon-p, Keccak-p[400] permutation's state byte length,
 // see column `n` of table 2.2 of
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr size_t PERM_STATE_LEN[] = { 40, 50 };
+constexpr size_t PERM_STATE_LEN[]{ 40, 50 };
 
 // Byte length of secret key, nonce & authentication tag, see table 2.1 of
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
@@ -49,24 +49,24 @@ rekeying(const uint8_t* const __restrict key,
          const uint8_t* const __restrict y,
          uint8_t* const __restrict skey)
 {
-  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t slen = PERM_STATE_LEN[static_cast<uint32_t>(p)];
   constexpr size_t rate = slen - (knt_len << 1);
 
-  constexpr size_t Z[] = { slen - knt_len, knt_len };
-  constexpr size_t z = Z[f];
+  constexpr size_t Z[]{ slen - knt_len, knt_len };
+  constexpr size_t z = Z[static_cast<size_t>(f)];
 
   // See table 2.3 of ISAP specification
-  constexpr uint8_t IV_KA[8] = { 0x02, knt_len << 3, rate << 3, 0x01,
-                                 s_h,  s_b,          s_e,       s_k };
+  constexpr uint8_t IV_KA[8]{ 0x02, knt_len << 3, rate << 3, 0x01,
+                              s_h,  s_b,          s_e,       s_k };
 
   // See table 2.3 of ISAP specification
-  constexpr uint8_t IV_KE[8] = { 0x03, knt_len << 3, rate << 3, 0x01,
-                                 s_h,  s_b,          s_e,       s_k };
+  constexpr uint8_t IV_KE[8]{ 0x03, knt_len << 3, rate << 3, 0x01,
+                              s_h,  s_b,          s_e,       s_k };
 
-  if constexpr (p == ASCON) {
+  if constexpr (p == perm_t::ASCON) {
     // --- begin initialization ---
 
-    uint64_t state[5] = {};
+    uint64_t state[5]{};
 
     state[0] = (static_cast<uint64_t>(key[0]) << 56) |
                (static_cast<uint64_t>(key[1]) << 48) |
@@ -86,7 +86,7 @@ rekeying(const uint8_t* const __restrict key,
                (static_cast<uint64_t>(key[14]) << 8) |
                (static_cast<uint64_t>(key[15]) << 0);
 
-    if constexpr (f == ENC) {
+    if constexpr (f == rk_flag_t::ENC) {
       state[2] = (static_cast<uint64_t>(IV_KE[0]) << 56) |
                  (static_cast<uint64_t>(IV_KE[1]) << 48) |
                  (static_cast<uint64_t>(IV_KE[2]) << 40) |
@@ -95,7 +95,7 @@ rekeying(const uint8_t* const __restrict key,
                  (static_cast<uint64_t>(IV_KE[5]) << 16) |
                  (static_cast<uint64_t>(IV_KE[6]) << 8) |
                  (static_cast<uint64_t>(IV_KE[7]) << 0);
-    } else if constexpr (f == MAC) {
+    } else if constexpr (f == rk_flag_t::MAC) {
       state[2] = (static_cast<uint64_t>(IV_KA[0]) << 56) |
                  (static_cast<uint64_t>(IV_KA[1]) << 48) |
                  (static_cast<uint64_t>(IV_KA[2]) << 40) |
@@ -148,7 +148,7 @@ rekeying(const uint8_t* const __restrict key,
 
     // --- end squeezing ---
 
-  } else if constexpr (p == KECCAK) {
+  } else if constexpr (p == perm_t::KECCAK) {
     // --- begin initialization ---
 
     uint16_t state[25] = {};
@@ -166,7 +166,7 @@ rekeying(const uint8_t* const __restrict key,
                  (static_cast<uint16_t>(key[koff ^ 0]) << 0);
     }
 
-    if constexpr (f == ENC) {
+    if constexpr (f == rk_flag_t::ENC) {
       constexpr size_t soff = 8;
 
 #if defined __clang__
@@ -181,7 +181,7 @@ rekeying(const uint8_t* const __restrict key,
         state[soff ^ i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
                           (static_cast<uint16_t>(IV_KE[ivoff ^ 0]) << 0);
       }
-    } else if constexpr (f == MAC) {
+    } else if constexpr (f == rk_flag_t::MAC) {
       constexpr size_t soff = 8;
 
 #if defined __clang__
@@ -257,16 +257,16 @@ enc(const uint8_t* const __restrict key,
     uint8_t* const __restrict out,
     const size_t mlen)
 {
-  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t slen = PERM_STATE_LEN[static_cast<uint32_t>(p)];
   constexpr size_t rate = slen - (knt_len << 1);
 
-  if constexpr (p == ASCON) {
+  if constexpr (p == perm_t::ASCON) {
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
 
     uint8_t skey[z];
-    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
+    rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint64_t state[5];
 
@@ -333,13 +333,13 @@ enc(const uint8_t* const __restrict key,
 
     // --- end squeezing ---
 
-  } else if (p == KECCAK) {
+  } else if (p == perm_t::KECCAK) {
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
 
     uint8_t skey[z];
-    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
+    rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint16_t state[25];
 
@@ -411,18 +411,18 @@ mac(const uint8_t* const __restrict key,
     const size_t clen,
     uint8_t* const __restrict tag)
 {
-  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t slen = PERM_STATE_LEN[static_cast<uint32_t>(p)];
   constexpr size_t rate = slen - (knt_len << 1);
   constexpr uint8_t seperator = 0b10000000;
 
   // See table 2.3 of ISAP specification
-  constexpr uint8_t IV_A[8] = { 0x01, knt_len << 3, rate << 3, 0x01,
-                                s_h,  s_b,          s_e,       s_k };
+  constexpr uint8_t IV_A[8]{ 0x01, knt_len << 3, rate << 3, 0x01,
+                             s_h,  s_b,          s_e,       s_k };
 
-  if constexpr (p == ASCON) {
+  if constexpr (p == perm_t::ASCON) {
     // --- begin initialization ---
 
-    uint64_t state[5] = {};
+    uint64_t state[5]{};
 
     state[0] = (static_cast<uint64_t>(nonce[0]) << 56) |
                (static_cast<uint64_t>(nonce[1]) << 48) |
@@ -544,7 +544,7 @@ mac(const uint8_t* const __restrict key,
     y[14] = static_cast<uint8_t>(state[1] >> 8);
     y[15] = static_cast<uint8_t>(state[1] >> 0);
 
-    rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
+    rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
 
     state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
                (static_cast<uint64_t>(skey[1]) << 48) |
@@ -586,10 +586,10 @@ mac(const uint8_t* const __restrict key,
 
     // --- end squeezing tag ---
 
-  } else if (p == KECCAK) {
+  } else if (p == perm_t::KECCAK) {
     // --- begin initialization ---
 
-    uint16_t state[25] = {};
+    uint16_t state[25]{};
 
 #if defined __clang__
 #pragma unroll 8
@@ -720,7 +720,7 @@ mac(const uint8_t* const __restrict key,
       y[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
     }
 
-    rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
+    rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
 
     for (size_t i = 0; i < 8; i++) {
       const size_t skoff = i << 1;
