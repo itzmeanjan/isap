@@ -1,5 +1,6 @@
 #pragma once
 #include "ascon.hpp"
+#include "utils.hpp"
 #include <benchmark/benchmark.h>
 
 // Benchmark ISAP Authenticated Encryption with Associated Data
