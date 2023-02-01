@@ -6,14 +6,6 @@
 #include <sstream>
 #include <type_traits>
 
-// Compile-time check to ensure # -of rounds Ascon-p/ Keccak-p[400] permutation
-// to be applied, is lesser than or equal to `n`
-inline static constexpr bool
-check_le_n(const size_t x, const size_t n)
-{
-  return x <= n;
-}
-
 // Given a bytearray of length N, this function converts it to human readable
 // hex string of length N << 1 | N >= 0
 static inline const std::string
@@ -32,7 +24,8 @@ to_hex(const uint8_t* const bytes, const size_t len)
 // Generates N -many random elements of type T | N >= 0
 template<typename T>
 inline static void
-random_data(T* const data, const size_t dlen) requires(std::is_integral_v<T>)
+random_data(T* const data, const size_t dlen)
+  requires(std::is_integral_v<T>)
 {
   std::random_device rd;
   std::mt19937_64 gen(rd());
