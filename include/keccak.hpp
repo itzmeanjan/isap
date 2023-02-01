@@ -47,7 +47,7 @@ constexpr uint16_t RC[MAX_ROUNDS]{ 1,     32898, 32906, 32768, 32907,
 
 // keccak-p[400] step mapping function `θ`, see specification in section 3.2.1
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
-static inline void
+static inline constexpr void
 theta(uint16_t* const state)
 {
   uint16_t c[5]{}; // initialization with zeros is important
@@ -92,7 +92,7 @@ theta(uint16_t* const state)
 
 // keccak-p[400] step mapping function `ρ`, see specification in section 3.2.2
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
-static inline void
+static inline constexpr void
 rho(uint16_t* const state)
 {
 #if defined __clang__
@@ -109,7 +109,7 @@ rho(uint16_t* const state)
 
 // keccak-p[400] step mapping function `π`, see specification in section 3.2.3
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
-static inline void
+static inline constexpr void
 pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 {
 #if defined __clang__
@@ -126,7 +126,7 @@ pi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 
 // keccak-p[400] step mapping function `χ`, see specification in section 3.2.4
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
-static inline void
+static inline constexpr void
 chi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 {
   for (size_t y = 0; y < 5; y++) {
@@ -151,7 +151,7 @@ chi(const uint16_t* __restrict state_in, uint16_t* const __restrict state_out)
 
 // keccak-p[400] step mapping function `ι`, see specification in section 3.2.5
 // of http://dx.doi.org/10.6028/NIST.FIPS.202
-static inline void
+static inline constexpr void
 iota(uint16_t* const state, const size_t r_idx)
 {
   state[0] ^= RC[r_idx];
@@ -161,7 +161,7 @@ iota(uint16_t* const state, const size_t r_idx)
 // step mapping functions in order, updating state array
 //
 // See section 3.3 of http://dx.doi.org/10.6028/NIST.FIPS.202
-static inline void
+static inline constexpr void
 round(uint16_t* const state, const size_t r_idx)
 {
   uint16_t tmp[25];
@@ -177,7 +177,7 @@ round(uint16_t* const state, const size_t r_idx)
 // on state of dimension 5 x 5 x 16, using algorithm 7 defined in section 3.3 of
 // http://dx.doi.org/10.6028/NIST.FIPS.202
 template<const size_t ROUNDS>
-static inline void
+static inline constexpr void
 permute(uint16_t* const state)
   requires(ROUNDS <= MAX_ROUNDS)
 {
