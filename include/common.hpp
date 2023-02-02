@@ -1,7 +1,10 @@
 #pragma once
 #include "ascon.hpp"
 #include "keccak.hpp"
+#include "utils.hpp"
 #include <algorithm>
+#include <cstring>
+#include <type_traits>
 
 // ISAP AEAD common functions
 namespace isap_common {
@@ -68,42 +71,26 @@ rekeying(const uint8_t* const __restrict key,
 
     uint64_t state[5]{};
 
-    state[0] = (static_cast<uint64_t>(key[0]) << 56) |
-               (static_cast<uint64_t>(key[1]) << 48) |
-               (static_cast<uint64_t>(key[2]) << 40) |
-               (static_cast<uint64_t>(key[3]) << 32) |
-               (static_cast<uint64_t>(key[4]) << 24) |
-               (static_cast<uint64_t>(key[5]) << 16) |
-               (static_cast<uint64_t>(key[6]) << 8) |
-               (static_cast<uint64_t>(key[7]) << 0);
-
-    state[1] = (static_cast<uint64_t>(key[8]) << 56) |
-               (static_cast<uint64_t>(key[9]) << 48) |
-               (static_cast<uint64_t>(key[10]) << 40) |
-               (static_cast<uint64_t>(key[11]) << 32) |
-               (static_cast<uint64_t>(key[12]) << 24) |
-               (static_cast<uint64_t>(key[13]) << 16) |
-               (static_cast<uint64_t>(key[14]) << 8) |
-               (static_cast<uint64_t>(key[15]) << 0);
+    std::memcpy(state, key, knt_len);
+    if constexpr (std::endian::native == std::endian::little) {
+      state[0] = bswap(state[0]);
+      state[1] = bswap(state[1]);
+    }
 
     if constexpr (f == rk_flag_t::ENC) {
-      state[2] = (static_cast<uint64_t>(IV_KE[0]) << 56) |
-                 (static_cast<uint64_t>(IV_KE[1]) << 48) |
-                 (static_cast<uint64_t>(IV_KE[2]) << 40) |
-                 (static_cast<uint64_t>(IV_KE[3]) << 32) |
-                 (static_cast<uint64_t>(IV_KE[4]) << 24) |
-                 (static_cast<uint64_t>(IV_KE[5]) << 16) |
-                 (static_cast<uint64_t>(IV_KE[6]) << 8) |
-                 (static_cast<uint64_t>(IV_KE[7]) << 0);
-    } else if constexpr (f == rk_flag_t::MAC) {
-      state[2] = (static_cast<uint64_t>(IV_KA[0]) << 56) |
-                 (static_cast<uint64_t>(IV_KA[1]) << 48) |
-                 (static_cast<uint64_t>(IV_KA[2]) << 40) |
-                 (static_cast<uint64_t>(IV_KA[3]) << 32) |
-                 (static_cast<uint64_t>(IV_KA[4]) << 24) |
-                 (static_cast<uint64_t>(IV_KA[5]) << 16) |
-                 (static_cast<uint64_t>(IV_KA[6]) << 8) |
-                 (static_cast<uint64_t>(IV_KA[7]) << 0);
+      static_assert(f == rk_flag_t::ENC, "Rekeying mode must be ENC !");
+
+      std::memcpy(state + 2, IV_KE, sizeof(IV_KE));
+      if constexpr (std::endian::native == std::endian::little) {
+        state[2] = bswap(state[2]);
+      }
+    } else {
+      static_assert(f == rk_flag_t::MAC, "Rekeying mode must be MAC !");
+
+      std::memcpy(state + 2, IV_KA, sizeof(IV_KA));
+      if constexpr (std::endian::native == std::endian::little) {
+        state[2] = bswap(state[2]);
+      }
     }
 
     ascon::permute<s_k>(state);
@@ -133,68 +120,87 @@ rekeying(const uint8_t* const __restrict key,
 
     // --- begin squeezing ---
 
-#if defined __clang__
-#pragma unroll 16
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 16
-#endif
-    for (size_t i = 0; i < z; i++) {
-      const size_t soff = i >> 3;
-      const size_t boff = (7 - (i & 7)) << 3;
+    if constexpr (z == 24) {
+      static_assert(z == 24, "Session key should be 24 -bytes wide !");
 
-      skey[i] = static_cast<uint8_t>(state[soff] >> boff);
+      if constexpr (std::endian::native == std::endian::little) {
+        const auto t0 = bswap(state[0]);
+        std::memcpy(skey, &t0, sizeof(t0));
+
+        const auto t1 = bswap(state[1]);
+        std::memcpy(skey + 8, &t1, sizeof(t1));
+
+        const auto t2 = bswap(state[2]);
+        std::memcpy(skey + 16, &t2, sizeof(t2));
+      } else {
+        std::memcpy(skey, state, z);
+      }
+    } else {
+      static_assert(z == 16, "Session key should be 16 -bytes wide !");
+
+      if constexpr (std::endian::native == std::endian::little) {
+        const auto t0 = bswap(state[0]);
+        std::memcpy(skey, &t0, sizeof(t0));
+
+        const auto t1 = bswap(state[1]);
+        std::memcpy(skey + 8, &t1, sizeof(t1));
+      } else {
+        std::memcpy(skey, state, z);
+      }
     }
 
     // --- end squeezing ---
 
-  } else if constexpr (p == perm_t::KECCAK) {
+  } else {
     // --- begin initialization ---
 
-    uint16_t state[25] = {};
+    uint16_t state[25]{};
 
+    std::memcpy(state, key, knt_len);
+    if constexpr (std::endian::native == std::endian::big) {
 #if defined __clang__
-#pragma unroll 8
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
 #pragma GCC ivdep
 #pragma GCC unroll 8
 #endif
-    for (size_t i = 0; i < 8; i++) {
-      const size_t koff = i << 1;
-
-      state[i] = (static_cast<uint16_t>(key[koff ^ 1]) << 8) |
-                 (static_cast<uint16_t>(key[koff ^ 0]) << 0);
+      for (size_t i = 0; i < knt_len / 2; i++) {
+        state[i] = bswap(state[i]);
+      }
     }
 
     if constexpr (f == rk_flag_t::ENC) {
-      constexpr size_t soff = 8;
+      static_assert(f == rk_flag_t::ENC, "Rekeying mode must be ENC !");
 
+      std::memcpy(state + 8, IV_KE, sizeof(IV_KE));
+      if constexpr (std::endian::native == std::endian::big) {
 #if defined __clang__
-#pragma unroll 4
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
 #pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
-      for (size_t i = 0; i < 4; i++) {
-        const size_t ivoff = i << 1;
-
-        state[soff ^ i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
-                          (static_cast<uint16_t>(IV_KE[ivoff ^ 0]) << 0);
+        for (size_t i = 8; i < 8 + (sizeof(IV_KE) / 2); i++) {
+          state[i] = bswap(state[i]);
+        }
       }
-    } else if constexpr (f == rk_flag_t::MAC) {
-      constexpr size_t soff = 8;
+    } else {
+      static_assert(f == rk_flag_t::MAC, "Rekeying mode must be MAC !");
 
+      std::memcpy(state + 8, IV_KA, sizeof(IV_KA));
+      if constexpr (std::endian::native == std::endian::big) {
 #if defined __clang__
-#pragma unroll 4
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
 #pragma GCC ivdep
 #pragma GCC unroll 4
 #endif
-      for (size_t i = 0; i < 4; i++) {
-        const size_t ivoff = i << 1;
-
-        state[soff ^ i] = (static_cast<uint16_t>(IV_KA[ivoff ^ 1]) << 8) |
-                          (static_cast<uint16_t>(IV_KA[ivoff ^ 0]) << 0);
+        for (size_t i = 8; i < 8 + (sizeof(IV_KA) / 2); i++) {
+          state[i] = bswap(state[i]);
+        }
       }
     }
 
@@ -225,11 +231,13 @@ rekeying(const uint8_t* const __restrict key,
 
     // --- begin squeezing ---
 
-    for (size_t i = 0; i < z; i++) {
-      const size_t soff = i >> 1;
-      const size_t boff = (i & 1) << 3;
-
-      skey[i] = static_cast<uint8_t>(state[soff] >> boff);
+    if constexpr (std::endian::native == std::endian::little) {
+      std::memcpy(skey, state, z);
+    } else {
+      for (size_t i = 0; i < z / 2; i++) {
+        const auto t = bswap(state[i]);
+        std::memcpy(skey + i * 2, &t, sizeof(t));
+      }
     }
 
     // --- end squeezing ---
