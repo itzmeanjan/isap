@@ -4,6 +4,7 @@
 #include "utils.hpp"
 #include <algorithm>
 #include <cstring>
+#include <iterator>
 #include <type_traits>
 
 // ISAP AEAD common functions
@@ -272,71 +273,49 @@ enc(const uint8_t* const __restrict key,
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
-
     uint8_t skey[z];
     rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint64_t state[5];
+    std::memcpy(state, skey, z);
+    std::memcpy(state + (z / 8), nonce, knt_len);
 
-    state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
-               (static_cast<uint64_t>(skey[1]) << 48) |
-               (static_cast<uint64_t>(skey[2]) << 40) |
-               (static_cast<uint64_t>(skey[3]) << 32) |
-               (static_cast<uint64_t>(skey[4]) << 24) |
-               (static_cast<uint64_t>(skey[5]) << 16) |
-               (static_cast<uint64_t>(skey[6]) << 8) |
-               (static_cast<uint64_t>(skey[7]) << 0);
-
-    state[1] = (static_cast<uint64_t>(skey[8]) << 56) |
-               (static_cast<uint64_t>(skey[9]) << 48) |
-               (static_cast<uint64_t>(skey[10]) << 40) |
-               (static_cast<uint64_t>(skey[11]) << 32) |
-               (static_cast<uint64_t>(skey[12]) << 24) |
-               (static_cast<uint64_t>(skey[13]) << 16) |
-               (static_cast<uint64_t>(skey[14]) << 8) |
-               (static_cast<uint64_t>(skey[15]) << 0);
-
-    state[2] = (static_cast<uint64_t>(skey[16]) << 56) |
-               (static_cast<uint64_t>(skey[17]) << 48) |
-               (static_cast<uint64_t>(skey[18]) << 40) |
-               (static_cast<uint64_t>(skey[19]) << 32) |
-               (static_cast<uint64_t>(skey[20]) << 24) |
-               (static_cast<uint64_t>(skey[21]) << 16) |
-               (static_cast<uint64_t>(skey[22]) << 8) |
-               (static_cast<uint64_t>(skey[23]) << 0);
-
-    state[3] = (static_cast<uint64_t>(nonce[0]) << 56) |
-               (static_cast<uint64_t>(nonce[1]) << 48) |
-               (static_cast<uint64_t>(nonce[2]) << 40) |
-               (static_cast<uint64_t>(nonce[3]) << 32) |
-               (static_cast<uint64_t>(nonce[4]) << 24) |
-               (static_cast<uint64_t>(nonce[5]) << 16) |
-               (static_cast<uint64_t>(nonce[6]) << 8) |
-               (static_cast<uint64_t>(nonce[7]) << 0);
-
-    state[4] = (static_cast<uint64_t>(nonce[8]) << 56) |
-               (static_cast<uint64_t>(nonce[9]) << 48) |
-               (static_cast<uint64_t>(nonce[10]) << 40) |
-               (static_cast<uint64_t>(nonce[11]) << 32) |
-               (static_cast<uint64_t>(nonce[12]) << 24) |
-               (static_cast<uint64_t>(nonce[13]) << 16) |
-               (static_cast<uint64_t>(nonce[14]) << 8) |
-               (static_cast<uint64_t>(nonce[15]) << 0);
+    if constexpr (std::endian::native == std::endian::little) {
+#if defined __clang__
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
+#elif defined __GNUG__
+#pragma GCC ivdep
+#pragma GCC unroll 5
+#endif
+      for (size_t i = 0; i < 5; i++) {
+        state[i] = bswap(state[i]);
+      }
+    }
 
     // --- end initialization ---
 
     // --- begin squeezing ---
 
-    for (size_t off = 0; off < mlen; off += rate) {
+    size_t off = 0;
+    while (off < mlen) {
       ascon::permute<s_e>(state);
 
       const size_t elen = std::min(rate, mlen - off);
-      for (size_t j = 0; j < elen; j++) {
-        const size_t boff = (7 - j) << 3;
-        const uint8_t b = static_cast<uint8_t>(state[0] >> boff);
 
-        out[off + j] = msg[off + j] ^ b;
+      uint64_t mword = 0;
+      std::memcpy(&mword, msg + off, elen);
+      if constexpr (std::endian::native == std::endian::little) {
+        mword = bswap(mword);
       }
+
+      uint64_t eword = mword ^ state[0];
+      if constexpr (std::endian::native == std::endian::little) {
+        eword = bswap(eword);
+      }
+      std::memcpy(out + off, &eword, elen);
+
+      off += elen;
     }
 
     // --- end squeezing ---
@@ -345,50 +324,50 @@ enc(const uint8_t* const __restrict key,
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
-
     uint8_t skey[z];
     rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint16_t state[25];
+    std::memcpy(state, skey, z);
+    std::memcpy(state + (z / 2), nonce, knt_len);
 
-    for (size_t i = 0; i < z; i += 2) {
-      const size_t soff = i >> 1;
-
-      state[soff] = (static_cast<uint16_t>(skey[i + 1]) << 8) |
-                    (static_cast<uint16_t>(skey[i + 0]) << 0);
-    }
-
-    constexpr size_t soff = z >> 1;
-
+    if constexpr (std::endian::native == std::endian::big) {
 #if defined __clang__
-#pragma unroll 8
+#pragma clang loop unroll(enable)
+#pragma clang loop vectorize(enable)
 #elif defined __GNUG__
 #pragma GCC ivdep
-#pragma GCC unroll 8
+#pragma GCC unroll 25
 #endif
-    for (size_t i = 0; i < 8; i++) {
-      const size_t noff = i << 1;
-
-      state[soff + i] = (static_cast<uint16_t>(nonce[noff ^ 1]) << 8) |
-                        (static_cast<uint16_t>(nonce[noff ^ 0]) << 0);
+      for (size_t i = 0; i < 25; i++) {
+        state[i] = bswap(state[i]);
+      }
     }
 
     // --- end initialization ---
 
     // --- begin squeezing ---
 
-    for (size_t off = 0; off < mlen; off += rate) {
+    size_t off = 0;
+    while (off < mlen) {
       keccak::permute<s_e>(state);
 
       const size_t elen = std::min(rate, mlen - off);
-      for (size_t j = 0; j < elen; j++) {
-        const size_t soff = j >> 1;
-        const size_t boff = (j & 1) << 3;
+      for (size_t i = 0; i < elen; i += 2) {
+        uint16_t mword = 0;
+        std::memcpy(&mword, msg + off + i, std::min(elen - i, sizeof(mword)));
+        if constexpr (std::endian::native == std::endian::big) {
+          mword = bswap(mword);
+        }
 
-        const uint8_t b = static_cast<uint8_t>(state[soff] >> boff);
-
-        out[off + j] = msg[off + j] ^ b;
+        uint16_t eword = mword ^ state[i / 2];
+        if constexpr (std::endian::native == std::endian::big) {
+          eword = bswap(eword);
+        }
+        std::memcpy(out + off + i, &eword, std::min(elen - i, sizeof(eword)));
       }
+
+      off += elen;
     }
 
     // --- end squeezing ---
