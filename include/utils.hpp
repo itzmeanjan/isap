@@ -69,6 +69,30 @@ copy_bytes_to_be_u64(const uint8_t* const __restrict bytes,
   }
 }
 
+// Given big-endian byte ordered 64 -bit unsigned integers, this routine copies
+// N (>=0) -many bytes ( from those u64 words ) to destination byte array.
+//
+// Note, N doesn't necessarily need to be multiple of 8. It may not be necessary
+// to copy all bytes of last u64 word.
+static inline void
+copy_be_u64_to_bytes(const uint64_t* const __restrict words,
+                     uint8_t* const __restrict bytes,
+                     const size_t blen)
+{
+  if constexpr (std::endian::native == std::endian::little) {
+    size_t boff = 0;
+    while (boff < blen) {
+      const size_t elen = std::min(blen - boff, 8ul);
+      const uint64_t v = bswap(words[boff / 8]);
+
+      std::memcpy(bytes + boff, &v, elen);
+      boff += elen;
+    }
+  } else {
+    std::memcpy(bytes, words, blen);
+  }
+}
+
 // Given a bytearray of length N, this function converts it to human readable
 // hex string of length N << 1 | N >= 0
 static inline const std::string
