@@ -5,7 +5,7 @@
 
 // Compile it with
 //
-// g++ -Wall -std=c++20 -I ./include example/isap_a_128.cpp
+// g++ -Wall -std=c++20 -O3 -I ./include example/isap_a_128.cpp
 int
 main()
 {
@@ -46,14 +46,17 @@ main()
     assert((txt[i] ^ dec[i]) == 0);
   }
 
-  std::cout << "ISAP-A-128 AEAD" << std::endl << std::endl;
-  std::cout << "Key          : " << to_hex(key, kntlen) << std::endl;
-  std::cout << "Nonce        : " << to_hex(nonce, kntlen) << std::endl;
-  std::cout << "Data         : " << to_hex(data, dlen) << std::endl;
-  std::cout << "Text         : " << to_hex(txt, mlen) << std::endl;
-  std::cout << "Ciphered     : " << to_hex(enc, mlen) << std::endl;
-  std::cout << "Tag          : " << to_hex(tag, kntlen) << std::endl;
-  std::cout << "Deciphered   : " << to_hex(dec, mlen) << std::endl;
+  {
+    using namespace isap_utils;
+    std::cout << "ISAP-A-128 AEAD" << std::endl << std::endl;
+    std::cout << "Key          : " << to_hex(key, kntlen) << std::endl;
+    std::cout << "Nonce        : " << to_hex(nonce, kntlen) << std::endl;
+    std::cout << "Data         : " << to_hex(data, dlen) << std::endl;
+    std::cout << "Text         : " << to_hex(txt, mlen) << std::endl;
+    std::cout << "Ciphered     : " << to_hex(enc, mlen) << std::endl;
+    std::cout << "Tag          : " << to_hex(tag, kntlen) << std::endl;
+    std::cout << "Deciphered   : " << to_hex(dec, mlen) << std::endl;
+  }
 
   // release memory allocations
   std::free(key);
