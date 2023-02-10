@@ -147,16 +147,7 @@ rekeying(const uint8_t* const __restrict key,
     // --- end absorption ---
 
     // --- begin squeezing ---
-
-    if constexpr (std::endian::native == std::endian::little) {
-      std::memcpy(skey, state, z);
-    } else {
-      for (size_t i = 0; i < z / 2; i++) {
-        const auto t = isap_utils::bswap(state[i]);
-        std::memcpy(skey + i * 2, &t, sizeof(t));
-      }
-    }
-
+    isap_utils::copy_le_u16_to_bytes(state, skey, z);
     // --- end squeezing ---
   }
 }
@@ -245,11 +236,8 @@ enc(const uint8_t* const __restrict key,
         uint16_t mword = 0;
         isap_utils::copy_bytes_to_le_u16(msg + off + i, vlen, &mword);
 
-        uint16_t eword = mword ^ state[i / 2];
-        if constexpr (std::endian::native == std::endian::big) {
-          eword = isap_utils::bswap(eword);
-        }
-        std::memcpy(out + off + i, &eword, std::min(elen - i, sizeof(eword)));
+        const uint16_t eword = mword ^ state[i / 2];
+        isap_utils::copy_le_u16_to_bytes(&eword, out + off + i, vlen);
       }
 
       off += elen;
@@ -391,12 +379,10 @@ mac(const uint8_t* const __restrict key,
         const size_t elen = std::min(rate, dlen - off);
 
         for (size_t i = 0; i < elen; i += 2) {
-          uint16_t mword = 0;
-          std::memcpy(&mword, data + off + i, std::min(elen - i, 2ul));
+          const size_t vlen = std::min(elen - i, 2ul);
 
-          if constexpr (std::endian::native == std::endian::big) {
-            mword = isap_utils::bswap(mword);
-          }
+          uint16_t mword = 0;
+          isap_utils::copy_bytes_to_le_u16(data + off + i, vlen, &mword);
 
           state[i / 2] ^= mword;
         }
@@ -428,12 +414,10 @@ mac(const uint8_t* const __restrict key,
         const size_t elen = std::min(rate, clen - off);
 
         for (size_t i = 0; i < elen; i += 2) {
-          uint16_t mword = 0;
-          std::memcpy(&mword, cipher + off + i, std::min(elen - i, 2ul));
+          const size_t vlen = std::min(elen - i, 2ul);
 
-          if constexpr (std::endian::native == std::endian::big) {
-            mword = isap_utils::bswap(mword);
-          }
+          uint16_t mword = 0;
+          isap_utils::copy_bytes_to_le_u16(cipher + off + i, vlen, &mword);
 
           state[i / 2] ^= mword;
         }
@@ -461,40 +445,13 @@ mac(const uint8_t* const __restrict key,
     uint8_t y[knt_len];
     uint8_t skey[knt_len];
 
-    if constexpr (std::endian::native == std::endian::little) {
-      std::memcpy(y, state, sizeof(y));
-    } else {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 16
-#endif
-      for (size_t i = 0; i < knt_len; i++) {
-        y[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
-      }
-    }
-
+    isap_utils::copy_le_u16_to_bytes(state, y, knt_len);
     rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
     isap_utils::copy_bytes_to_le_u16(skey, knt_len, state);
 
     keccak::permute<s_h>(state);
 
-    if constexpr (std::endian::native == std::endian::little) {
-      std::memcpy(tag, state, 16);
-    } else {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 16
-#endif
-      for (size_t i = 0; i < knt_len; i++) {
-        tag[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
-      }
-    }
+    isap_utils::copy_le_u16_to_bytes(state, tag, knt_len);
 
     // --- end squeezing tag ---
   }
