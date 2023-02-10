@@ -113,52 +113,12 @@ rekeying(const uint8_t* const __restrict key,
 
     uint16_t state[25]{};
 
-    std::memcpy(state, key, knt_len);
-    if constexpr (std::endian::native == std::endian::big) {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 8
-#endif
-      for (size_t i = 0; i < knt_len / 2; i++) {
-        state[i] = isap_utils::bswap(state[i]);
-      }
-    }
+    isap_utils::copy_bytes_to_le_u16(key, knt_len, state);
 
     if constexpr (f == rk_flag_t::ENC) {
-      static_assert(f == rk_flag_t::ENC, "Rekeying mode must be ENC !");
-
-      std::memcpy(state + 8, IV_KE, sizeof(IV_KE));
-      if constexpr (std::endian::native == std::endian::big) {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-        for (size_t i = 8; i < 8 + (sizeof(IV_KE) / 2); i++) {
-          state[i] = isap_utils::bswap(state[i]);
-        }
-      }
+      isap_utils::copy_bytes_to_le_u16(IV_KE, sizeof(IV_KE), state + 8);
     } else {
-      static_assert(f == rk_flag_t::MAC, "Rekeying mode must be MAC !");
-
-      std::memcpy(state + 8, IV_KA, sizeof(IV_KA));
-      if constexpr (std::endian::native == std::endian::big) {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-        for (size_t i = 8; i < 8 + (sizeof(IV_KA) / 2); i++) {
-          state[i] = isap_utils::bswap(state[i]);
-        }
-      }
+      isap_utils::copy_bytes_to_le_u16(IV_KA, sizeof(IV_KA), state + 8);
     }
 
     keccak::permute<s_k>(state);
@@ -266,21 +226,9 @@ enc(const uint8_t* const __restrict key,
     rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint16_t state[25];
-    std::memcpy(state, skey, z);
-    std::memcpy(state + (z / 2), nonce, knt_len);
 
-    if constexpr (std::endian::native == std::endian::big) {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 25
-#endif
-      for (size_t i = 0; i < 25; i++) {
-        state[i] = isap_utils::bswap(state[i]);
-      }
-    }
+    isap_utils::copy_bytes_to_le_u16(skey, z, state);
+    isap_utils::copy_bytes_to_le_u16(nonce, knt_len, state + (z / 2));
 
     // --- end initialization ---
 
@@ -292,11 +240,10 @@ enc(const uint8_t* const __restrict key,
 
       const size_t elen = std::min(rate, mlen - off);
       for (size_t i = 0; i < elen; i += 2) {
+        const size_t vlen = std::min(elen - i, 2ul);
+
         uint16_t mword = 0;
-        std::memcpy(&mword, msg + off + i, std::min(elen - i, sizeof(mword)));
-        if constexpr (std::endian::native == std::endian::big) {
-          mword = isap_utils::bswap(mword);
-        }
+        isap_utils::copy_bytes_to_le_u16(msg + off + i, vlen, &mword);
 
         uint16_t eword = mword ^ state[i / 2];
         if constexpr (std::endian::native == std::endian::big) {
@@ -430,21 +377,8 @@ mac(const uint8_t* const __restrict key,
 
     uint16_t state[25]{};
 
-    std::memcpy(state, nonce, 16);
-    std::memcpy(state + 8, IV_A, sizeof(IV_A));
-
-    if constexpr (std::endian::native == std::endian::big) {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 12
-#endif
-      for (size_t i = 0; i < 12; i++) {
-        state[i] = isap_utils::bswap(state[i]);
-      }
-    }
+    isap_utils::copy_bytes_to_le_u16(nonce, knt_len, state);
+    isap_utils::copy_bytes_to_le_u16(IV_A, sizeof(IV_A), state + 8);
 
     keccak::permute<s_h>(state);
 
@@ -543,24 +477,7 @@ mac(const uint8_t* const __restrict key,
     }
 
     rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
-
-    if constexpr (std::endian::native == std::endian::little) {
-      std::memcpy(state, skey, sizeof(skey));
-    } else {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 8
-#endif
-      for (size_t i = 0; i < 8; i++) {
-        const size_t skoff = i << 1;
-
-        state[i] = (static_cast<uint16_t>(skey[skoff + 1]) << 8) |
-                   (static_cast<uint16_t>(skey[skoff + 0]) << 0);
-      }
-    }
+    isap_utils::copy_bytes_to_le_u16(skey, knt_len, state);
 
     keccak::permute<s_h>(state);
 
