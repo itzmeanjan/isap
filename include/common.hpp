@@ -225,21 +225,26 @@ enc(const uint8_t* const __restrict key,
 
     // --- begin squeezing ---
 
+    uint64_t buf0[(rate + 7) / 8];
+    uint64_t buf1[(rate + 7) / 8];
+
     size_t off = 0;
     while (off < mlen) {
       keccak::permute<s_e>(state);
 
       const size_t elen = std::min(rate, mlen - off);
-      for (size_t i = 0; i < elen; i += 2) {
-        const size_t vlen = std::min(elen - i, 2ul);
 
-        uint16_t mword = 0;
-        isap_utils::copy_bytes_to_le_u16(msg + off + i, vlen, &mword);
+      std::memset(buf0, 0, sizeof(buf0));
+      isap_utils::copy_bytes_to_le_u64(msg + off, elen, buf0);
 
-        const uint16_t eword = mword ^ state[i / 2];
-        isap_utils::copy_le_u16_to_bytes(&eword, out + off + i, vlen);
+      std::memset(buf1, 0, sizeof(buf1));
+      isap_utils::copy_le_u16_to_le_u64(state, elen, buf1);
+
+      for (size_t i = 0; i < (rate + 7) / 8; i++) {
+        buf1[i] ^= buf0[i];
       }
 
+      isap_utils::copy_le_u64_to_bytes(buf1, out + off, elen);
       off += elen;
     }
 
@@ -374,22 +379,25 @@ mac(const uint8_t* const __restrict key,
 
     // --- begin absorbing associated data ---
     {
+      uint64_t buf0[(rate + 7) / 8];
+      uint64_t buf1[(rate + 7) / 8];
+
       size_t off = 0;
       while (off < dlen) {
         const size_t elen = std::min(rate, dlen - off);
 
-        for (size_t i = 0; i < elen; i += 2) {
-          const size_t vlen = std::min(elen - i, 2ul);
+        std::memset(buf0, 0, sizeof(buf0));
+        isap_utils::copy_bytes_to_le_u64(data + off, elen, buf0);
+        isap_utils::copy_le_u16_to_le_u64(state, sizeof(buf1), buf1);
 
-          uint16_t mword = 0;
-          isap_utils::copy_bytes_to_le_u16(data + off + i, vlen, &mword);
-
-          state[i / 2] ^= mword;
+        for (size_t i = 0; i < (rate + 7) / 8; i++) {
+          buf1[i] ^= buf0[i];
         }
 
+        isap_utils::copy_le_u64_to_le_u16(buf1, state, sizeof(buf1));
         off += elen;
 
-        if (elen == rate) [[likely]] {
+        if (elen == rate) {
           keccak::permute<s_h>(state);
         }
       }
@@ -409,22 +417,25 @@ mac(const uint8_t* const __restrict key,
 
     // --- begin absorbing cipher text ---
     {
+      uint64_t buf0[(rate + 7) / 8];
+      uint64_t buf1[(rate + 7) / 8];
+
       size_t off = 0;
       while (off < clen) {
         const size_t elen = std::min(rate, clen - off);
 
-        for (size_t i = 0; i < elen; i += 2) {
-          const size_t vlen = std::min(elen - i, 2ul);
+        std::memset(buf0, 0, sizeof(buf0));
+        isap_utils::copy_bytes_to_le_u64(cipher + off, elen, buf0);
+        isap_utils::copy_le_u16_to_le_u64(state, sizeof(buf1), buf1);
 
-          uint16_t mword = 0;
-          isap_utils::copy_bytes_to_le_u16(cipher + off + i, vlen, &mword);
-
-          state[i / 2] ^= mword;
+        for (size_t i = 0; i < (rate + 7) / 8; i++) {
+          buf1[i] ^= buf0[i];
         }
 
+        isap_utils::copy_le_u64_to_le_u16(buf1, state, sizeof(buf1));
         off += elen;
 
-        if (elen == rate) [[likely]] {
+        if (elen == rate) {
           keccak::permute<s_h>(state);
         }
       }
