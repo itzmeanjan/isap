@@ -320,7 +320,7 @@ enc(const uint8_t* const __restrict key,
 
     // --- end squeezing ---
 
-  } else if (p == perm_t::KECCAK) {
+  } else {
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
