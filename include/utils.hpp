@@ -90,6 +90,88 @@ copy_bytes_to_le_u16(const uint8_t* const __restrict bytes,
   }
 }
 
+// Given N (>=0) -many bytes, this routine copies them to 64 -bit unsigned
+// integer target s.t. these bytes are interpreted in little-endian byte order.
+//
+// Note, N doesn't necessarily need to be multiple of 8. Last u64 word can be
+// partially filled.
+static inline void
+copy_bytes_to_le_u64(const uint8_t* const __restrict bytes,
+                     const size_t blen,
+                     uint64_t* const __restrict words)
+{
+  std::memcpy(words, bytes, blen);
+
+  if constexpr (std::endian::native == std::endian::big) {
+    // # of u64 words ( last one may be partially filled )
+    const size_t wlen = (blen + 7) / 8;
+    for (size_t i = 0; i < wlen; i++) {
+      words[i] = bswap(words[i]);
+    }
+  }
+}
+
+// Given N (>=0) -many bytes, this routine copies 16 -bit unsigned integer
+// source to 64 -bit unsigned integer target s.t. both source and destination
+// bytes are interpreted in little-endian byte order.
+static inline void
+copy_le_u16_to_le_u64(const uint16_t* const __restrict u16s,
+                      const size_t blen,
+                      uint64_t* const __restrict u64s)
+{
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(u64s, u16s, blen);
+  } else {
+    for (size_t i = 0; i < blen; i++) {
+      const uint8_t byte = static_cast<uint8_t>(u16s[i / 2] >> ((i & 1) * 8));
+      u64s[i / 8] |= static_cast<uint64_t>(byte) << ((i & 7) * 8);
+    }
+  }
+}
+
+// Given little-endian byte ordered 64 -bit unsigned integers, this routine
+// copies N (>=0) -many bytes ( from those u64 words ) to destination u16 array
+// s.t. both source and destination interprets bytes in little-endian order.
+static inline void
+copy_le_u64_to_le_u16(const uint64_t* const __restrict u64s,
+                      uint16_t* const __restrict u16s,
+                      const size_t blen)
+{
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(u16s, u64s, blen);
+  } else {
+    for (size_t i = 0; i < blen; i++) {
+      const uint8_t byte = static_cast<uint8_t>(u64s[i / 8] >> ((i & 7) * 8));
+      u16s[i / 2] |= static_cast<uint16_t>(byte) << ((i & 1) * 8);
+    }
+  }
+}
+
+// Given little-endian byte ordered 64 -bit unsigned integers, this routine
+// copies N (>=0) -many bytes ( from those u64 words ) to destination byte
+// array.
+//
+// Note, N doesn't necessarily need to be multiple of 8. It may not be necessary
+// to copy all bytes of last u64 word.
+static inline void
+copy_le_u64_to_bytes(const uint64_t* const __restrict words,
+                     uint8_t* const __restrict bytes,
+                     const size_t blen)
+{
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(bytes, words, blen);
+  } else {
+    size_t boff = 0;
+    while (boff < blen) {
+      const size_t elen = std::min(blen - boff, 8ul);
+      const uint64_t v = bswap(words[boff / 8]);
+
+      std::memcpy(bytes + boff, &v, elen);
+      boff += elen;
+    }
+  }
+}
+
 // Given big-endian byte ordered 64 -bit unsigned integers, this routine copies
 // N (>=0) -many bytes ( from those u64 words ) to destination byte array.
 //
