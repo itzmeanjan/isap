@@ -1,6 +1,8 @@
 #pragma once
+#include <bit>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <iomanip>
 #include <random>
 #include <sstream>
@@ -43,6 +45,27 @@ bswap(const T a)
            ((a & 0x00ff000000000000ul) >> 40) |
            ((a & 0xff00000000000000ul) >> 56);
 #endif
+  }
+}
+
+// Given N (>=0) -many bytes, this routine copies them to 64 -bit unsigned
+// integer target s.t. these bytes are interpreted in big-endian byte order.
+//
+// Note, N doesn't necessarily need to be multiple of 8. Last u64 word can be
+// partially filled.
+static inline void
+copy_bytes_to_be_u64(const uint8_t* const __restrict bytes,
+                     const size_t blen,
+                     uint64_t* const __restrict words)
+{
+  std::memcpy(words, bytes, blen);
+
+  if constexpr (std::endian::native == std::endian::little) {
+    // # of u64 words ( last one may be partially filled )
+    const size_t wlen = (blen + 7) / 8;
+    for (size_t i = 0; i < wlen; i++) {
+      words[i] = bswap(words[i]);
+    }
   }
 }
 
