@@ -6,7 +6,6 @@
 #include <iomanip>
 #include <random>
 #include <sstream>
-#include <type_traits>
 
 // Utility Routines used in ISAP AEAD Scheme
 namespace isap_utils {
