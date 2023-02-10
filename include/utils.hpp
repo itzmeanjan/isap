@@ -69,6 +69,27 @@ copy_bytes_to_be_u64(const uint8_t* const __restrict bytes,
   }
 }
 
+// Given N (>=0) -many bytes, this routine copies them to 16 -bit unsigned
+// integer target s.t. these bytes are interpreted in little-endian byte order.
+//
+// Note, N doesn't necessarily need to be multiple of 2. Last u16 word can be
+// partially filled.
+static inline void
+copy_bytes_to_le_u16(const uint8_t* const __restrict bytes,
+                     const size_t blen,
+                     uint16_t* const __restrict words)
+{
+  std::memcpy(words, bytes, blen);
+
+  if constexpr (std::endian::native == std::endian::big) {
+    // # of u16 words ( last one may be partially filled )
+    const size_t wlen = (blen + 1) / 2;
+    for (size_t i = 0; i < wlen; i++) {
+      words[i] = bswap(words[i]);
+    }
+  }
+}
+
 // Given big-endian byte ordered 64 -bit unsigned integers, this routine copies
 // N (>=0) -many bytes ( from those u64 words ) to destination byte array.
 //
