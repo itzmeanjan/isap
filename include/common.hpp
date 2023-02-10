@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <cstring>
 #include <iterator>
-#include <type_traits>
 
 // ISAP AEAD common functions
 namespace isap_common {
@@ -106,36 +105,7 @@ rekeying(const uint8_t* const __restrict key,
     // --- end absorption ---
 
     // --- begin squeezing ---
-
-    if constexpr (z == 24) {
-      static_assert(z == 24, "Session key should be 24 -bytes wide !");
-
-      if constexpr (std::endian::native == std::endian::little) {
-        const auto t0 = isap_utils::bswap(state[0]);
-        std::memcpy(skey, &t0, sizeof(t0));
-
-        const auto t1 = isap_utils::bswap(state[1]);
-        std::memcpy(skey + 8, &t1, sizeof(t1));
-
-        const auto t2 = isap_utils::bswap(state[2]);
-        std::memcpy(skey + 16, &t2, sizeof(t2));
-      } else {
-        std::memcpy(skey, state, z);
-      }
-    } else {
-      static_assert(z == 16, "Session key should be 16 -bytes wide !");
-
-      if constexpr (std::endian::native == std::endian::little) {
-        const auto t0 = isap_utils::bswap(state[0]);
-        std::memcpy(skey, &t0, sizeof(t0));
-
-        const auto t1 = isap_utils::bswap(state[1]);
-        std::memcpy(skey + 8, &t1, sizeof(t1));
-      } else {
-        std::memcpy(skey, state, z);
-      }
-    }
-
+    isap_utils::copy_be_u64_to_bytes(state, skey, z);
     // --- end squeezing ---
 
   } else {
@@ -280,11 +250,8 @@ enc(const uint8_t* const __restrict key,
       uint64_t mword = 0;
       isap_utils::copy_bytes_to_be_u64(msg + off, elen, &mword);
 
-      uint64_t eword = mword ^ state[0];
-      if constexpr (std::endian::native == std::endian::little) {
-        eword = isap_utils::bswap(eword);
-      }
-      std::memcpy(out + off, &eword, elen);
+      const uint64_t eword = mword ^ state[0];
+      isap_utils::copy_be_u64_to_bytes(&eword, out + off, elen);
 
       off += elen;
     }
@@ -447,28 +414,14 @@ mac(const uint8_t* const __restrict key,
 
     uint8_t y[knt_len];
     uint8_t skey[knt_len];
-    uint64_t tmp[2];
 
-    std::memcpy(tmp, state, sizeof(tmp));
-    if constexpr (std::endian::native == std::endian::little) {
-      tmp[0] = isap_utils::bswap(tmp[0]);
-      tmp[1] = isap_utils::bswap(tmp[1]);
-    }
-
-    std::memcpy(y, tmp, sizeof(tmp));
-
+    isap_utils::copy_be_u64_to_bytes(state, y, knt_len);
     rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
-
     isap_utils::copy_bytes_to_be_u64(skey, knt_len, state);
 
     ascon::permute<s_h>(state);
 
-    std::memcpy(tmp, state, sizeof(tmp));
-    if constexpr (std::endian::native == std::endian::little) {
-      tmp[0] = isap_utils::bswap(tmp[0]);
-      tmp[1] = isap_utils::bswap(tmp[1]);
-    }
-    std::memcpy(tag, tmp, sizeof(tmp));
+    isap_utils::copy_be_u64_to_bytes(state, tag, knt_len);
 
     // --- end squeezing tag ---
 
