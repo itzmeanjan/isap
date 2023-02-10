@@ -6,6 +6,9 @@
 #include <sstream>
 #include <type_traits>
 
+// Utility Routines used in ISAP AEAD Scheme
+namespace isap_utils {
+
 // Given a {16, 64} -bit unsigned integer word, this routine swaps byte order
 // and returns byte swapped {16, 64} -bit word.
 //
@@ -71,4 +74,6 @@ random_data(T* const data, const size_t dlen)
   for (size_t i = 0; i < dlen; i++) {
     data[i] = dis(gen);
   }
+}
+
 }

@@ -12,7 +12,7 @@ static void
 ascon_permutation(benchmark::State& state)
 {
   uint64_t pstate[5];
-  random_data<uint64_t>(pstate, 5);
+  isap_utils::random_data<uint64_t>(pstate, 5);
 
   for (auto _ : state) {
     ascon::permute<ROUNDS>(pstate);

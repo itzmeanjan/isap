@@ -13,7 +13,7 @@ static void
 keccak_permutation(benchmark::State& state)
 {
   uint16_t pstate[25];
-  random_data<uint16_t>(pstate, 25);
+  isap_utils::random_data<uint16_t>(pstate, 25);
 
   for (auto _ : state) {
     keccak::permute<ROUNDS>(pstate);
