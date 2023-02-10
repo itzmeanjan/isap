@@ -72,26 +72,12 @@ rekeying(const uint8_t* const __restrict key,
 
     uint64_t state[5]{};
 
-    std::memcpy(state, key, knt_len);
-    if constexpr (std::endian::native == std::endian::little) {
-      state[0] = isap_utils::bswap(state[0]);
-      state[1] = isap_utils::bswap(state[1]);
-    }
+    isap_utils::copy_bytes_to_be_u64(key, knt_len, state);
 
     if constexpr (f == rk_flag_t::ENC) {
-      static_assert(f == rk_flag_t::ENC, "Rekeying mode must be ENC !");
-
-      std::memcpy(state + 2, IV_KE, sizeof(IV_KE));
-      if constexpr (std::endian::native == std::endian::little) {
-        state[2] = isap_utils::bswap(state[2]);
-      }
+      isap_utils::copy_bytes_to_be_u64(IV_KE, sizeof(IV_KE), state + 2);
     } else {
-      static_assert(f == rk_flag_t::MAC, "Rekeying mode must be MAC !");
-
-      std::memcpy(state + 2, IV_KA, sizeof(IV_KA));
-      if constexpr (std::endian::native == std::endian::little) {
-        state[2] = isap_utils::bswap(state[2]);
-      }
+      isap_utils::copy_bytes_to_be_u64(IV_KA, sizeof(IV_KA), state + 2);
     }
 
     ascon::permute<s_k>(state);
@@ -277,21 +263,9 @@ enc(const uint8_t* const __restrict key,
     rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint64_t state[5];
-    std::memcpy(state, skey, z);
-    std::memcpy(state + (z / 8), nonce, knt_len);
 
-    if constexpr (std::endian::native == std::endian::little) {
-#if defined __clang__
-#pragma clang loop unroll(enable)
-#pragma clang loop vectorize(enable)
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 5
-#endif
-      for (size_t i = 0; i < 5; i++) {
-        state[i] = isap_utils::bswap(state[i]);
-      }
-    }
+    isap_utils::copy_bytes_to_be_u64(skey, z, state);
+    isap_utils::copy_bytes_to_be_u64(nonce, knt_len, state + (z / 8));
 
     // --- end initialization ---
 
@@ -304,10 +278,7 @@ enc(const uint8_t* const __restrict key,
       const size_t elen = std::min(rate, mlen - off);
 
       uint64_t mword = 0;
-      std::memcpy(&mword, msg + off, elen);
-      if constexpr (std::endian::native == std::endian::little) {
-        mword = isap_utils::bswap(mword);
-      }
+      isap_utils::copy_bytes_to_be_u64(msg + off, elen, &mword);
 
       uint64_t eword = mword ^ state[0];
       if constexpr (std::endian::native == std::endian::little) {
@@ -411,14 +382,8 @@ mac(const uint8_t* const __restrict key,
 
     uint64_t state[5]{};
 
-    std::memcpy(state, nonce, 16);
-    std::memcpy(state + 2, IV_A, sizeof(IV_A));
-
-    if constexpr (std::endian::native == std::endian::little) {
-      for (size_t i = 0; i < 3; i++) {
-        state[i] = isap_utils::bswap(state[i]);
-      }
-    }
+    isap_utils::copy_bytes_to_be_u64(nonce, knt_len, state);
+    isap_utils::copy_bytes_to_be_u64(IV_A, sizeof(IV_A), state + 2);
 
     ascon::permute<s_h>(state);
 
@@ -433,11 +398,7 @@ mac(const uint8_t* const __restrict key,
         const size_t off = i * rate;
 
         uint64_t word;
-        std::memcpy(&word, data + off, sizeof(word));
-
-        if constexpr (std::endian::native == std::endian::little) {
-          word = isap_utils::bswap(word);
-        }
+        isap_utils::copy_bytes_to_be_u64(data + off, rate, &word);
 
         state[0] ^= word;
         ascon::permute<s_h>(state);
@@ -446,14 +407,8 @@ mac(const uint8_t* const __restrict key,
       const size_t off = blk_cnt * rate;
 
       uint64_t word = 0;
-      std::memcpy(&word, data + off, rm_bytes);
-
-      if constexpr (std::endian::native == std::endian::little) {
-        word |= static_cast<uint64_t>(seperator) << (rm_bytes * 8);
-        word = isap_utils::bswap(word);
-      } else {
-        word |= static_cast<uint64_t>(seperator) << ((7 - rm_bytes) * 8);
-      }
+      isap_utils::copy_bytes_to_be_u64(data + off, rm_bytes, &word);
+      word |= static_cast<uint64_t>(seperator) << ((7 - rm_bytes) * 8);
 
       state[0] ^= word;
       ascon::permute<s_h>(state);
@@ -471,11 +426,7 @@ mac(const uint8_t* const __restrict key,
         const size_t off = i * rate;
 
         uint64_t word;
-        std::memcpy(&word, cipher + off, sizeof(word));
-
-        if constexpr (std::endian::native == std::endian::little) {
-          word = isap_utils::bswap(word);
-        }
+        isap_utils::copy_bytes_to_be_u64(cipher + off, rate, &word);
 
         state[0] ^= word;
         ascon::permute<s_h>(state);
@@ -484,14 +435,8 @@ mac(const uint8_t* const __restrict key,
       const size_t off = blk_cnt * rate;
 
       uint64_t word = 0;
-      std::memcpy(&word, cipher + off, rm_bytes);
-
-      if constexpr (std::endian::native == std::endian::little) {
-        word |= static_cast<uint64_t>(seperator) << (rm_bytes * 8);
-        word = isap_utils::bswap(word);
-      } else {
-        word |= static_cast<uint64_t>(seperator) << ((7 - rm_bytes) * 8);
-      }
+      isap_utils::copy_bytes_to_be_u64(cipher + off, rm_bytes, &word);
+      word |= static_cast<uint64_t>(seperator) << ((7 - rm_bytes) * 8);
 
       state[0] ^= word;
       ascon::permute<s_h>(state);
@@ -514,11 +459,7 @@ mac(const uint8_t* const __restrict key,
 
     rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
 
-    std::memcpy(state, skey, sizeof(skey));
-    if constexpr (std::endian::native == std::endian::little) {
-      state[0] = isap_utils::bswap(state[0]);
-      state[1] = isap_utils::bswap(state[1]);
-    }
+    isap_utils::copy_bytes_to_be_u64(skey, knt_len, state);
 
     ascon::permute<s_h>(state);
 
