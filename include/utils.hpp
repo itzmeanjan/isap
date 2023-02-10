@@ -114,6 +114,31 @@ copy_be_u64_to_bytes(const uint64_t* const __restrict words,
   }
 }
 
+// Given little-endian byte ordered 16 -bit unsigned integers, this routine
+// copies N (>=0) -many bytes ( from those u16 words ) to destination byte
+// array.
+//
+// Note, N doesn't necessarily need to be multiple of 2. It may not be necessary
+// to copy all bytes of last u16 word.
+static inline void
+copy_le_u16_to_bytes(const uint16_t* const __restrict words,
+                     uint8_t* const __restrict bytes,
+                     const size_t blen)
+{
+  if constexpr (std::endian::native == std::endian::little) {
+    std::memcpy(bytes, words, blen);
+  } else {
+    size_t boff = 0;
+    while (boff < blen) {
+      const size_t elen = std::min(blen - boff, 2ul);
+      const uint16_t v = bswap(words[boff / 2]);
+
+      std::memcpy(bytes + boff, &v, elen);
+      boff += elen;
+    }
+  }
+}
+
 // Given a bytearray of length N, this function converts it to human readable
 // hex string of length N << 1 | N >= 0
 static inline const std::string
