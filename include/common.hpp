@@ -1,20 +1,23 @@
 #pragma once
 #include "ascon.hpp"
 #include "keccak.hpp"
+#include "utils.hpp"
 #include <algorithm>
+#include <cstring>
+#include <iterator>
 
 // ISAP AEAD common functions
 namespace isap_common {
 
 // Which permutation is being used for AEAD scheme
-enum perm_t
+enum class perm_t : uint32_t
 {
   ASCON, // Ascon-p used in ISAP-A-128{A}
   KECCAK // Keccak-p[400] used in ISAP-K-128{A}
 };
 
 // Generate session key for encryption/ authentication operation
-enum rk_flag_t
+enum class rk_flag_t : uint32_t
 {
   ENC, // encryption mode
   MAC  // authentication mode
@@ -23,7 +26,7 @@ enum rk_flag_t
 // Ascon-p, Keccak-p[400] permutation's state byte length,
 // see column `n` of table 2.2 of
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr size_t PERM_STATE_LEN[] = { 40, 50 };
+constexpr size_t PERM_STATE_LEN[]{ 40, 50 };
 
 // Byte length of secret key, nonce & authentication tag, see table 2.1 of
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
@@ -49,61 +52,31 @@ rekeying(const uint8_t* const __restrict key,
          const uint8_t* const __restrict y,
          uint8_t* const __restrict skey)
 {
-  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t slen = PERM_STATE_LEN[static_cast<uint32_t>(p)];
   constexpr size_t rate = slen - (knt_len << 1);
 
-  constexpr size_t Z[] = { slen - knt_len, knt_len };
-  constexpr size_t z = Z[f];
+  constexpr size_t Z[]{ slen - knt_len, knt_len };
+  constexpr size_t z = Z[static_cast<size_t>(f)];
 
   // See table 2.3 of ISAP specification
-  constexpr uint8_t IV_KA[8] = { 0x02, knt_len << 3, rate << 3, 0x01,
-                                 s_h,  s_b,          s_e,       s_k };
+  constexpr uint8_t IV_KA[8]{ 0x02, knt_len << 3, rate << 3, 0x01,
+                              s_h,  s_b,          s_e,       s_k };
 
   // See table 2.3 of ISAP specification
-  constexpr uint8_t IV_KE[8] = { 0x03, knt_len << 3, rate << 3, 0x01,
-                                 s_h,  s_b,          s_e,       s_k };
+  constexpr uint8_t IV_KE[8]{ 0x03, knt_len << 3, rate << 3, 0x01,
+                              s_h,  s_b,          s_e,       s_k };
 
-  if constexpr (p == ASCON) {
+  if constexpr (p == perm_t::ASCON) {
     // --- begin initialization ---
 
-    uint64_t state[5] = {};
+    uint64_t state[5]{};
 
-    state[0] = (static_cast<uint64_t>(key[0]) << 56) |
-               (static_cast<uint64_t>(key[1]) << 48) |
-               (static_cast<uint64_t>(key[2]) << 40) |
-               (static_cast<uint64_t>(key[3]) << 32) |
-               (static_cast<uint64_t>(key[4]) << 24) |
-               (static_cast<uint64_t>(key[5]) << 16) |
-               (static_cast<uint64_t>(key[6]) << 8) |
-               (static_cast<uint64_t>(key[7]) << 0);
+    isap_utils::copy_bytes_to_be_u64(key, knt_len, state);
 
-    state[1] = (static_cast<uint64_t>(key[8]) << 56) |
-               (static_cast<uint64_t>(key[9]) << 48) |
-               (static_cast<uint64_t>(key[10]) << 40) |
-               (static_cast<uint64_t>(key[11]) << 32) |
-               (static_cast<uint64_t>(key[12]) << 24) |
-               (static_cast<uint64_t>(key[13]) << 16) |
-               (static_cast<uint64_t>(key[14]) << 8) |
-               (static_cast<uint64_t>(key[15]) << 0);
-
-    if constexpr (f == ENC) {
-      state[2] = (static_cast<uint64_t>(IV_KE[0]) << 56) |
-                 (static_cast<uint64_t>(IV_KE[1]) << 48) |
-                 (static_cast<uint64_t>(IV_KE[2]) << 40) |
-                 (static_cast<uint64_t>(IV_KE[3]) << 32) |
-                 (static_cast<uint64_t>(IV_KE[4]) << 24) |
-                 (static_cast<uint64_t>(IV_KE[5]) << 16) |
-                 (static_cast<uint64_t>(IV_KE[6]) << 8) |
-                 (static_cast<uint64_t>(IV_KE[7]) << 0);
-    } else if constexpr (f == MAC) {
-      state[2] = (static_cast<uint64_t>(IV_KA[0]) << 56) |
-                 (static_cast<uint64_t>(IV_KA[1]) << 48) |
-                 (static_cast<uint64_t>(IV_KA[2]) << 40) |
-                 (static_cast<uint64_t>(IV_KA[3]) << 32) |
-                 (static_cast<uint64_t>(IV_KA[4]) << 24) |
-                 (static_cast<uint64_t>(IV_KA[5]) << 16) |
-                 (static_cast<uint64_t>(IV_KA[6]) << 8) |
-                 (static_cast<uint64_t>(IV_KA[7]) << 0);
+    if constexpr (f == rk_flag_t::ENC) {
+      isap_utils::copy_bytes_to_be_u64(IV_KE, sizeof(IV_KE), state + 2);
+    } else {
+      isap_utils::copy_bytes_to_be_u64(IV_KA, sizeof(IV_KA), state + 2);
     }
 
     ascon::permute<s_k>(state);
@@ -132,70 +105,20 @@ rekeying(const uint8_t* const __restrict key,
     // --- end absorption ---
 
     // --- begin squeezing ---
-
-#if defined __clang__
-#pragma unroll 16
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 16
-#endif
-    for (size_t i = 0; i < z; i++) {
-      const size_t soff = i >> 3;
-      const size_t boff = (7 - (i & 7)) << 3;
-
-      skey[i] = static_cast<uint8_t>(state[soff] >> boff);
-    }
-
+    isap_utils::copy_be_u64_to_bytes(state, skey, z);
     // --- end squeezing ---
 
-  } else if constexpr (p == KECCAK) {
+  } else {
     // --- begin initialization ---
 
-    uint16_t state[25] = {};
+    uint16_t state[25]{};
 
-#if defined __clang__
-#pragma unroll 8
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 8
-#endif
-    for (size_t i = 0; i < 8; i++) {
-      const size_t koff = i << 1;
+    isap_utils::copy_bytes_to_le_u16(key, knt_len, state);
 
-      state[i] = (static_cast<uint16_t>(key[koff ^ 1]) << 8) |
-                 (static_cast<uint16_t>(key[koff ^ 0]) << 0);
-    }
-
-    if constexpr (f == ENC) {
-      constexpr size_t soff = 8;
-
-#if defined __clang__
-#pragma unroll 4
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-      for (size_t i = 0; i < 4; i++) {
-        const size_t ivoff = i << 1;
-
-        state[soff ^ i] = (static_cast<uint16_t>(IV_KE[ivoff ^ 1]) << 8) |
-                          (static_cast<uint16_t>(IV_KE[ivoff ^ 0]) << 0);
-      }
-    } else if constexpr (f == MAC) {
-      constexpr size_t soff = 8;
-
-#if defined __clang__
-#pragma unroll 4
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-      for (size_t i = 0; i < 4; i++) {
-        const size_t ivoff = i << 1;
-
-        state[soff ^ i] = (static_cast<uint16_t>(IV_KA[ivoff ^ 1]) << 8) |
-                          (static_cast<uint16_t>(IV_KA[ivoff ^ 0]) << 0);
-      }
+    if constexpr (f == rk_flag_t::ENC) {
+      isap_utils::copy_bytes_to_le_u16(IV_KE, sizeof(IV_KE), state + 8);
+    } else {
+      isap_utils::copy_bytes_to_le_u16(IV_KA, sizeof(IV_KA), state + 8);
     }
 
     keccak::permute<s_k>(state);
@@ -224,14 +147,7 @@ rekeying(const uint8_t* const __restrict key,
     // --- end absorption ---
 
     // --- begin squeezing ---
-
-    for (size_t i = 0; i < z; i++) {
-      const size_t soff = i >> 1;
-      const size_t boff = (i & 1) << 3;
-
-      skey[i] = static_cast<uint8_t>(state[soff] >> boff);
-    }
-
+    isap_utils::copy_le_u16_to_bytes(state, skey, z);
     // --- end squeezing ---
   }
 }
@@ -257,130 +173,79 @@ enc(const uint8_t* const __restrict key,
     uint8_t* const __restrict out,
     const size_t mlen)
 {
-  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t slen = PERM_STATE_LEN[static_cast<uint32_t>(p)];
   constexpr size_t rate = slen - (knt_len << 1);
 
-  if constexpr (p == ASCON) {
+  if constexpr (p == perm_t::ASCON) {
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
-
     uint8_t skey[z];
-    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
+    rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint64_t state[5];
 
-    state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
-               (static_cast<uint64_t>(skey[1]) << 48) |
-               (static_cast<uint64_t>(skey[2]) << 40) |
-               (static_cast<uint64_t>(skey[3]) << 32) |
-               (static_cast<uint64_t>(skey[4]) << 24) |
-               (static_cast<uint64_t>(skey[5]) << 16) |
-               (static_cast<uint64_t>(skey[6]) << 8) |
-               (static_cast<uint64_t>(skey[7]) << 0);
-
-    state[1] = (static_cast<uint64_t>(skey[8]) << 56) |
-               (static_cast<uint64_t>(skey[9]) << 48) |
-               (static_cast<uint64_t>(skey[10]) << 40) |
-               (static_cast<uint64_t>(skey[11]) << 32) |
-               (static_cast<uint64_t>(skey[12]) << 24) |
-               (static_cast<uint64_t>(skey[13]) << 16) |
-               (static_cast<uint64_t>(skey[14]) << 8) |
-               (static_cast<uint64_t>(skey[15]) << 0);
-
-    state[2] = (static_cast<uint64_t>(skey[16]) << 56) |
-               (static_cast<uint64_t>(skey[17]) << 48) |
-               (static_cast<uint64_t>(skey[18]) << 40) |
-               (static_cast<uint64_t>(skey[19]) << 32) |
-               (static_cast<uint64_t>(skey[20]) << 24) |
-               (static_cast<uint64_t>(skey[21]) << 16) |
-               (static_cast<uint64_t>(skey[22]) << 8) |
-               (static_cast<uint64_t>(skey[23]) << 0);
-
-    state[3] = (static_cast<uint64_t>(nonce[0]) << 56) |
-               (static_cast<uint64_t>(nonce[1]) << 48) |
-               (static_cast<uint64_t>(nonce[2]) << 40) |
-               (static_cast<uint64_t>(nonce[3]) << 32) |
-               (static_cast<uint64_t>(nonce[4]) << 24) |
-               (static_cast<uint64_t>(nonce[5]) << 16) |
-               (static_cast<uint64_t>(nonce[6]) << 8) |
-               (static_cast<uint64_t>(nonce[7]) << 0);
-
-    state[4] = (static_cast<uint64_t>(nonce[8]) << 56) |
-               (static_cast<uint64_t>(nonce[9]) << 48) |
-               (static_cast<uint64_t>(nonce[10]) << 40) |
-               (static_cast<uint64_t>(nonce[11]) << 32) |
-               (static_cast<uint64_t>(nonce[12]) << 24) |
-               (static_cast<uint64_t>(nonce[13]) << 16) |
-               (static_cast<uint64_t>(nonce[14]) << 8) |
-               (static_cast<uint64_t>(nonce[15]) << 0);
+    isap_utils::copy_bytes_to_be_u64(skey, z, state);
+    isap_utils::copy_bytes_to_be_u64(nonce, knt_len, state + (z / 8));
 
     // --- end initialization ---
 
     // --- begin squeezing ---
 
-    for (size_t off = 0; off < mlen; off += rate) {
+    size_t off = 0;
+    while (off < mlen) {
       ascon::permute<s_e>(state);
 
       const size_t elen = std::min(rate, mlen - off);
-      for (size_t j = 0; j < elen; j++) {
-        const size_t boff = (7 - j) << 3;
-        const uint8_t b = static_cast<uint8_t>(state[0] >> boff);
 
-        out[off + j] = msg[off + j] ^ b;
-      }
+      uint64_t mword = 0;
+      isap_utils::copy_bytes_to_be_u64(msg + off, elen, &mword);
+
+      const uint64_t eword = mword ^ state[0];
+      isap_utils::copy_be_u64_to_bytes(&eword, out + off, elen);
+
+      off += elen;
     }
 
     // --- end squeezing ---
 
-  } else if (p == KECCAK) {
+  } else {
     // --- begin initialization ---
 
     constexpr size_t z = slen - knt_len;
-
     uint8_t skey[z];
-    rekeying<p, ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
+    rekeying<p, rk_flag_t::ENC, s_b, s_k, s_e, s_h>(key, nonce, skey);
 
     uint16_t state[25];
 
-    for (size_t i = 0; i < z; i += 2) {
-      const size_t soff = i >> 1;
-
-      state[soff] = (static_cast<uint16_t>(skey[i + 1]) << 8) |
-                    (static_cast<uint16_t>(skey[i + 0]) << 0);
-    }
-
-    constexpr size_t soff = z >> 1;
-
-#if defined __clang__
-#pragma unroll 8
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 8
-#endif
-    for (size_t i = 0; i < 8; i++) {
-      const size_t noff = i << 1;
-
-      state[soff + i] = (static_cast<uint16_t>(nonce[noff ^ 1]) << 8) |
-                        (static_cast<uint16_t>(nonce[noff ^ 0]) << 0);
-    }
+    isap_utils::copy_bytes_to_le_u16(skey, z, state);
+    isap_utils::copy_bytes_to_le_u16(nonce, knt_len, state + (z / 2));
 
     // --- end initialization ---
 
     // --- begin squeezing ---
 
-    for (size_t off = 0; off < mlen; off += rate) {
+    uint64_t buf0[(rate + 7) / 8];
+    uint64_t buf1[(rate + 7) / 8];
+
+    size_t off = 0;
+    while (off < mlen) {
       keccak::permute<s_e>(state);
 
       const size_t elen = std::min(rate, mlen - off);
-      for (size_t j = 0; j < elen; j++) {
-        const size_t soff = j >> 1;
-        const size_t boff = (j & 1) << 3;
 
-        const uint8_t b = static_cast<uint8_t>(state[soff] >> boff);
+      std::memset(buf0, 0, sizeof(buf0));
+      isap_utils::copy_bytes_to_le_u64(msg + off, elen, buf0);
 
-        out[off + j] = msg[off + j] ^ b;
+      std::memset(buf1, 0, sizeof(buf1));
+      isap_utils::copy_le_u16_to_le_u64(state, elen, buf1);
+
+      for (size_t i = 0; i < (rate + 7) / 8; i++) {
+        buf1[i] ^= buf0[i];
       }
+
+      isap_utils::copy_le_u64_to_bytes(buf1, out + off, elen);
+      off += elen;
     }
 
     // --- end squeezing ---
@@ -411,45 +276,21 @@ mac(const uint8_t* const __restrict key,
     const size_t clen,
     uint8_t* const __restrict tag)
 {
-  constexpr size_t slen = PERM_STATE_LEN[p];
+  constexpr size_t slen = PERM_STATE_LEN[static_cast<uint32_t>(p)];
   constexpr size_t rate = slen - (knt_len << 1);
   constexpr uint8_t seperator = 0b10000000;
 
   // See table 2.3 of ISAP specification
-  constexpr uint8_t IV_A[8] = { 0x01, knt_len << 3, rate << 3, 0x01,
-                                s_h,  s_b,          s_e,       s_k };
+  constexpr uint8_t IV_A[8]{ 0x01, knt_len << 3, rate << 3, 0x01,
+                             s_h,  s_b,          s_e,       s_k };
 
-  if constexpr (p == ASCON) {
+  if constexpr (p == perm_t::ASCON) {
     // --- begin initialization ---
 
-    uint64_t state[5] = {};
+    uint64_t state[5]{};
 
-    state[0] = (static_cast<uint64_t>(nonce[0]) << 56) |
-               (static_cast<uint64_t>(nonce[1]) << 48) |
-               (static_cast<uint64_t>(nonce[2]) << 40) |
-               (static_cast<uint64_t>(nonce[3]) << 32) |
-               (static_cast<uint64_t>(nonce[4]) << 24) |
-               (static_cast<uint64_t>(nonce[5]) << 16) |
-               (static_cast<uint64_t>(nonce[6]) << 8) |
-               (static_cast<uint64_t>(nonce[7]) << 0);
-
-    state[1] = (static_cast<uint64_t>(nonce[8]) << 56) |
-               (static_cast<uint64_t>(nonce[9]) << 48) |
-               (static_cast<uint64_t>(nonce[10]) << 40) |
-               (static_cast<uint64_t>(nonce[11]) << 32) |
-               (static_cast<uint64_t>(nonce[12]) << 24) |
-               (static_cast<uint64_t>(nonce[13]) << 16) |
-               (static_cast<uint64_t>(nonce[14]) << 8) |
-               (static_cast<uint64_t>(nonce[15]) << 0);
-
-    state[2] = (static_cast<uint64_t>(IV_A[0]) << 56) |
-               (static_cast<uint64_t>(IV_A[1]) << 48) |
-               (static_cast<uint64_t>(IV_A[2]) << 40) |
-               (static_cast<uint64_t>(IV_A[3]) << 32) |
-               (static_cast<uint64_t>(IV_A[4]) << 24) |
-               (static_cast<uint64_t>(IV_A[5]) << 16) |
-               (static_cast<uint64_t>(IV_A[6]) << 8) |
-               (static_cast<uint64_t>(IV_A[7]) << 0);
+    isap_utils::copy_bytes_to_be_u64(nonce, knt_len, state);
+    isap_utils::copy_bytes_to_be_u64(IV_A, sizeof(IV_A), state + 2);
 
     ascon::permute<s_h>(state);
 
@@ -462,27 +303,21 @@ mac(const uint8_t* const __restrict key,
 
       for (size_t i = 0; i < blk_cnt; i++) {
         const size_t off = i * rate;
-        const uint64_t w = (static_cast<uint64_t>(data[off + 0]) << 56) |
-                           (static_cast<uint64_t>(data[off + 1]) << 48) |
-                           (static_cast<uint64_t>(data[off + 2]) << 40) |
-                           (static_cast<uint64_t>(data[off + 3]) << 32) |
-                           (static_cast<uint64_t>(data[off + 4]) << 24) |
-                           (static_cast<uint64_t>(data[off + 5]) << 16) |
-                           (static_cast<uint64_t>(data[off + 6]) << 8) |
-                           (static_cast<uint64_t>(data[off + 7]) << 0);
 
-        state[0] ^= w;
+        uint64_t word;
+        isap_utils::copy_bytes_to_be_u64(data + off, rate, &word);
+
+        state[0] ^= word;
         ascon::permute<s_h>(state);
       }
 
       const size_t off = blk_cnt * rate;
-      uint64_t w = static_cast<uint64_t>(seperator) << ((7 - rm_bytes) << 3);
 
-      for (size_t i = 0; i < rm_bytes; i++) {
-        w |= static_cast<uint64_t>(data[off + i]) << ((7 - i) << 3);
-      }
+      uint64_t word = 0;
+      isap_utils::copy_bytes_to_be_u64(data + off, rm_bytes, &word);
+      word |= static_cast<uint64_t>(seperator) << ((7 - rm_bytes) * 8);
 
-      state[0] ^= w;
+      state[0] ^= word;
       ascon::permute<s_h>(state);
 
       state[4] ^= 0b1; // seperator between associated data & cipher text
@@ -496,27 +331,21 @@ mac(const uint8_t* const __restrict key,
 
       for (size_t i = 0; i < blk_cnt; i++) {
         const size_t off = i * rate;
-        const uint64_t w = (static_cast<uint64_t>(cipher[off + 0]) << 56) |
-                           (static_cast<uint64_t>(cipher[off + 1]) << 48) |
-                           (static_cast<uint64_t>(cipher[off + 2]) << 40) |
-                           (static_cast<uint64_t>(cipher[off + 3]) << 32) |
-                           (static_cast<uint64_t>(cipher[off + 4]) << 24) |
-                           (static_cast<uint64_t>(cipher[off + 5]) << 16) |
-                           (static_cast<uint64_t>(cipher[off + 6]) << 8) |
-                           (static_cast<uint64_t>(cipher[off + 7]) << 0);
 
-        state[0] ^= w;
+        uint64_t word;
+        isap_utils::copy_bytes_to_be_u64(cipher + off, rate, &word);
+
+        state[0] ^= word;
         ascon::permute<s_h>(state);
       }
 
       const size_t off = blk_cnt * rate;
-      uint64_t w = static_cast<uint64_t>(seperator) << ((7 - rm_bytes) << 3);
 
-      for (size_t i = 0; i < rm_bytes; i++) {
-        w |= static_cast<uint64_t>(cipher[off + i]) << ((7 - i) << 3);
-      }
+      uint64_t word = 0;
+      isap_utils::copy_bytes_to_be_u64(cipher + off, rm_bytes, &word);
+      word |= static_cast<uint64_t>(seperator) << ((7 - rm_bytes) * 8);
 
-      state[0] ^= w;
+      state[0] ^= word;
       ascon::permute<s_h>(state);
     }
     // --- end absorbing cipher text ---
@@ -526,98 +355,23 @@ mac(const uint8_t* const __restrict key,
     uint8_t y[knt_len];
     uint8_t skey[knt_len];
 
-    y[0] = static_cast<uint8_t>(state[0] >> 56);
-    y[1] = static_cast<uint8_t>(state[0] >> 48);
-    y[2] = static_cast<uint8_t>(state[0] >> 40);
-    y[3] = static_cast<uint8_t>(state[0] >> 32);
-    y[4] = static_cast<uint8_t>(state[0] >> 24);
-    y[5] = static_cast<uint8_t>(state[0] >> 16);
-    y[6] = static_cast<uint8_t>(state[0] >> 8);
-    y[7] = static_cast<uint8_t>(state[0] >> 0);
-
-    y[8] = static_cast<uint8_t>(state[1] >> 56);
-    y[9] = static_cast<uint8_t>(state[1] >> 48);
-    y[10] = static_cast<uint8_t>(state[1] >> 40);
-    y[11] = static_cast<uint8_t>(state[1] >> 32);
-    y[12] = static_cast<uint8_t>(state[1] >> 24);
-    y[13] = static_cast<uint8_t>(state[1] >> 16);
-    y[14] = static_cast<uint8_t>(state[1] >> 8);
-    y[15] = static_cast<uint8_t>(state[1] >> 0);
-
-    rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
-
-    state[0] = (static_cast<uint64_t>(skey[0]) << 56) |
-               (static_cast<uint64_t>(skey[1]) << 48) |
-               (static_cast<uint64_t>(skey[2]) << 40) |
-               (static_cast<uint64_t>(skey[3]) << 32) |
-               (static_cast<uint64_t>(skey[4]) << 24) |
-               (static_cast<uint64_t>(skey[5]) << 16) |
-               (static_cast<uint64_t>(skey[6]) << 8) |
-               (static_cast<uint64_t>(skey[7]) << 0);
-
-    state[1] = (static_cast<uint64_t>(skey[8]) << 56) |
-               (static_cast<uint64_t>(skey[9]) << 48) |
-               (static_cast<uint64_t>(skey[10]) << 40) |
-               (static_cast<uint64_t>(skey[11]) << 32) |
-               (static_cast<uint64_t>(skey[12]) << 24) |
-               (static_cast<uint64_t>(skey[13]) << 16) |
-               (static_cast<uint64_t>(skey[14]) << 8) |
-               (static_cast<uint64_t>(skey[15]) << 0);
+    isap_utils::copy_be_u64_to_bytes(state, y, knt_len);
+    rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
+    isap_utils::copy_bytes_to_be_u64(skey, knt_len, state);
 
     ascon::permute<s_h>(state);
 
-    tag[0] = static_cast<uint8_t>(state[0] >> 56);
-    tag[1] = static_cast<uint8_t>(state[0] >> 48);
-    tag[2] = static_cast<uint8_t>(state[0] >> 40);
-    tag[3] = static_cast<uint8_t>(state[0] >> 32);
-    tag[4] = static_cast<uint8_t>(state[0] >> 24);
-    tag[5] = static_cast<uint8_t>(state[0] >> 16);
-    tag[6] = static_cast<uint8_t>(state[0] >> 8);
-    tag[7] = static_cast<uint8_t>(state[0] >> 0);
-
-    tag[8] = static_cast<uint8_t>(state[1] >> 56);
-    tag[9] = static_cast<uint8_t>(state[1] >> 48);
-    tag[10] = static_cast<uint8_t>(state[1] >> 40);
-    tag[11] = static_cast<uint8_t>(state[1] >> 32);
-    tag[12] = static_cast<uint8_t>(state[1] >> 24);
-    tag[13] = static_cast<uint8_t>(state[1] >> 16);
-    tag[14] = static_cast<uint8_t>(state[1] >> 8);
-    tag[15] = static_cast<uint8_t>(state[1] >> 0);
+    isap_utils::copy_be_u64_to_bytes(state, tag, knt_len);
 
     // --- end squeezing tag ---
 
-  } else if (p == KECCAK) {
+  } else {
     // --- begin initialization ---
 
-    uint16_t state[25] = {};
+    uint16_t state[25]{};
 
-#if defined __clang__
-#pragma unroll 8
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 8
-#endif
-    for (size_t i = 0; i < 8; i++) {
-      const size_t noff = i << 1;
-
-      state[i] = (static_cast<uint16_t>(nonce[noff ^ 1]) << 8) |
-                 (static_cast<uint16_t>(nonce[noff ^ 0]) << 0);
-    }
-
-    constexpr size_t soff = 8;
-
-#if defined __clang__
-#pragma unroll 4
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 4
-#endif
-    for (size_t i = 0; i < 4; i++) {
-      const size_t ivoff = i << 1;
-
-      state[soff + i] = (static_cast<uint16_t>(IV_A[ivoff ^ 1]) << 8) |
-                        (static_cast<uint16_t>(IV_A[ivoff ^ 0]) << 0);
-    }
+    isap_utils::copy_bytes_to_le_u16(nonce, knt_len, state);
+    isap_utils::copy_bytes_to_le_u16(IV_A, sizeof(IV_A), state + 8);
 
     keccak::permute<s_h>(state);
 
@@ -625,40 +379,36 @@ mac(const uint8_t* const __restrict key,
 
     // --- begin absorbing associated data ---
     {
-      const size_t blk_cnt = dlen / rate;
-      const size_t rm_bytes = dlen % rate;
+      uint64_t buf0[(rate + 7) / 8];
+      uint64_t buf1[(rate + 7) / 8];
 
-      for (size_t i = 0; i < blk_cnt; i++) {
-        const size_t off = i * rate;
+      size_t off = 0;
+      while (off < dlen) {
+        const size_t elen = std::min(rate, dlen - off);
 
-        for (size_t j = 0; j < rate; j += 2) {
-          const size_t soff = j >> 1;
-          const uint16_t w = (static_cast<uint16_t>(data[off + j + 1]) << 8) |
-                             (static_cast<uint16_t>(data[off + j + 0]) << 0);
+        std::memset(buf0, 0, sizeof(buf0));
+        isap_utils::copy_bytes_to_le_u64(data + off, elen, buf0);
+        isap_utils::copy_le_u16_to_le_u64(state, sizeof(buf1), buf1);
 
-          state[soff] ^= w;
+        for (size_t i = 0; i < (rate + 7) / 8; i++) {
+          buf1[i] ^= buf0[i];
         }
 
-        keccak::permute<s_h>(state);
+        isap_utils::copy_le_u64_to_le_u16(buf1, state, sizeof(buf1));
+        off += elen;
+
+        if (elen == rate) {
+          keccak::permute<s_h>(state);
+        }
       }
 
-      const size_t off = blk_cnt * rate;
-
-      for (size_t i = 0; i < rm_bytes; i++) {
-        const size_t soff = i >> 1;
-        const size_t boff = (i & 1) << 3;
-
-        const uint16_t w = static_cast<uint16_t>(data[off + i]) << boff;
-
-        state[soff] ^= w;
-      }
-
+      const size_t rm_bytes = dlen % rate;
       const size_t soff = rm_bytes >> 1;
-      const size_t boff = (rm_bytes & 1) << 3;
+      const size_t boff = (rm_bytes & 1) * 8;
 
       const uint16_t w = static_cast<uint16_t>(seperator) << boff;
-
       state[soff] ^= w;
+
       keccak::permute<s_h>(state);
 
       state[24] ^= 0b1 << 8; // seperator between associated data & cipher text
@@ -667,40 +417,36 @@ mac(const uint8_t* const __restrict key,
 
     // --- begin absorbing cipher text ---
     {
-      const size_t blk_cnt = clen / rate;
-      const size_t rm_bytes = clen % rate;
+      uint64_t buf0[(rate + 7) / 8];
+      uint64_t buf1[(rate + 7) / 8];
 
-      for (size_t i = 0; i < blk_cnt; i++) {
-        const size_t off = i * rate;
+      size_t off = 0;
+      while (off < clen) {
+        const size_t elen = std::min(rate, clen - off);
 
-        for (size_t j = 0; j < rate; j += 2) {
-          const size_t soff = j >> 1;
-          const uint16_t w = (static_cast<uint16_t>(cipher[off + j + 1]) << 8) |
-                             (static_cast<uint16_t>(cipher[off + j + 0]) << 0);
+        std::memset(buf0, 0, sizeof(buf0));
+        isap_utils::copy_bytes_to_le_u64(cipher + off, elen, buf0);
+        isap_utils::copy_le_u16_to_le_u64(state, sizeof(buf1), buf1);
 
-          state[soff] ^= w;
+        for (size_t i = 0; i < (rate + 7) / 8; i++) {
+          buf1[i] ^= buf0[i];
         }
 
-        keccak::permute<s_h>(state);
+        isap_utils::copy_le_u64_to_le_u16(buf1, state, sizeof(buf1));
+        off += elen;
+
+        if (elen == rate) {
+          keccak::permute<s_h>(state);
+        }
       }
 
-      const size_t off = blk_cnt * rate;
-
-      for (size_t i = 0; i < rm_bytes; i++) {
-        const size_t soff = i >> 1;
-        const size_t boff = (i & 1) << 3;
-
-        const uint16_t w = static_cast<uint16_t>(cipher[off + i]) << boff;
-
-        state[soff] ^= w;
-      }
-
+      const size_t rm_bytes = clen % rate;
       const size_t soff = rm_bytes >> 1;
-      const size_t boff = (rm_bytes & 1) << 3;
+      const size_t boff = (rm_bytes & 1) * 8;
 
       const uint16_t w = static_cast<uint16_t>(seperator) << boff;
-
       state[soff] ^= w;
+
       keccak::permute<s_h>(state);
     }
     // --- end absorbing cipher text ---
@@ -710,30 +456,13 @@ mac(const uint8_t* const __restrict key,
     uint8_t y[knt_len];
     uint8_t skey[knt_len];
 
-#if defined __clang__
-#pragma unroll 16
-#elif defined __GNUG__
-#pragma GCC ivdep
-#pragma GCC unroll 16
-#endif
-    for (size_t i = 0; i < knt_len; i++) {
-      y[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
-    }
-
-    rekeying<p, MAC, s_b, s_k, s_e, s_h>(key, y, skey);
-
-    for (size_t i = 0; i < 8; i++) {
-      const size_t skoff = i << 1;
-
-      state[i] = (static_cast<uint16_t>(skey[skoff ^ 1]) << 8) |
-                 (static_cast<uint16_t>(skey[skoff ^ 0]) << 0);
-    }
+    isap_utils::copy_le_u16_to_bytes(state, y, knt_len);
+    rekeying<p, rk_flag_t::MAC, s_b, s_k, s_e, s_h>(key, y, skey);
+    isap_utils::copy_bytes_to_le_u16(skey, knt_len, state);
 
     keccak::permute<s_h>(state);
 
-    for (size_t i = 0; i < knt_len; i++) {
-      tag[i] = static_cast<uint8_t>(state[i >> 1] >> ((i & 1) << 3));
-    }
+    isap_utils::copy_le_u16_to_bytes(state, tag, knt_len);
 
     // --- end squeezing tag ---
   }

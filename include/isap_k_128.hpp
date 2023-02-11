@@ -1,5 +1,6 @@
 #pragma once
 #include "aead.hpp"
+#include "common.hpp"
 
 // ISAP-K-128 authenticated encryption with associated data ( AEAD )
 namespace isap_k_128 {
@@ -21,7 +22,7 @@ encrypt(const uint8_t* const __restrict key,
         const size_t mlen,
         uint8_t* const __restrict tag)
 {
-  isap::encrypt<isap_common::KECCAK, 12, 12, 12, 20>(
+  isap::encrypt<isap_common::perm_t::KECCAK, 12, 12, 12, 20>(
     key, nonce, data, dlen, msg, enc, mlen, tag);
 }
 
@@ -42,7 +43,7 @@ decrypt(const uint8_t* const __restrict key,
         uint8_t* const __restrict msg,
         const size_t mlen)
 {
-  return isap::decrypt<isap_common::KECCAK, 12, 12, 12, 20>(
+  return isap::decrypt<isap_common::perm_t::KECCAK, 12, 12, 12, 20>(
     key, nonce, tag, data, dlen, enc, msg, mlen);
 }
 

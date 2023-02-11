@@ -1,6 +1,7 @@
 #pragma once
-#include "utils.hpp"
 #include <bit>
+#include <cstddef>
+#include <cstdint>
 
 // Ascon-p Permutation, copied from my previous work
 // https://github.com/itzmeanjan/ascon/blob/58a1a1e/include/permutation.hpp
@@ -11,16 +12,16 @@ constexpr size_t MAX_ROUNDS = 12;
 
 // Ascon-p round constants; taken from table A.2 in ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-constexpr uint64_t RC[MAX_ROUNDS] = {
-  0x00000000000000f0ul, 0x00000000000000e1ul, 0x00000000000000d2ul,
-  0x00000000000000c3ul, 0x00000000000000b4ul, 0x00000000000000a5ul,
-  0x0000000000000096ul, 0x0000000000000087ul, 0x0000000000000078ul,
-  0x0000000000000069ul, 0x000000000000005aul, 0x000000000000004bul
-};
+constexpr uint64_t RC[MAX_ROUNDS]{ 0x00000000000000f0ul, 0x00000000000000e1ul,
+                                   0x00000000000000d2ul, 0x00000000000000c3ul,
+                                   0x00000000000000b4ul, 0x00000000000000a5ul,
+                                   0x0000000000000096ul, 0x0000000000000087ul,
+                                   0x0000000000000078ul, 0x0000000000000069ul,
+                                   0x000000000000005aul, 0x000000000000004bul };
 
 // Addition of constants step; see appendix A of ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-inline static void
+static inline constexpr void
 p_c(uint64_t* const state, const size_t c_idx)
 {
   state[2] ^= RC[c_idx];
@@ -29,7 +30,7 @@ p_c(uint64_t* const state, const size_t c_idx)
 // Substitution layer i.e. 5 -bit S-box S(x) applied on Ascon state; taken from
 // figure 5 in Ascon specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/ascon-spec-final.pdf
-inline static void
+static inline constexpr void
 p_s(uint64_t* const state)
 {
   state[0] ^= state[4];
@@ -56,7 +57,7 @@ p_s(uint64_t* const state)
 
 // Linear diffusion layer; taken from figure A.1 in ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
-inline static void
+static inline constexpr void
 p_l(uint64_t* const state)
 {
   using namespace std;
@@ -71,8 +72,9 @@ p_l(uint64_t* const state)
 // Ascon permutation; taken from appendix A of ISAP specification
 // https://csrc.nist.gov/CSRC/media/Projects/lightweight-cryptography/documents/finalist-round/updated-spec-doc/isap-spec-final.pdf
 template<const size_t ROUNDS>
-inline static void
-permute(uint64_t* const state) requires(check_le_n(ROUNDS, MAX_ROUNDS))
+static inline constexpr void
+permute(uint64_t* const state)
+  requires(ROUNDS <= MAX_ROUNDS)
 {
   constexpr size_t beg = MAX_ROUNDS - ROUNDS;
 

@@ -1,20 +1,22 @@
 #pragma once
-#include "ascon.hpp"
+#include "keccak.hpp"
+#include "utils.hpp"
 #include <benchmark/benchmark.h>
 
 // Benchmark ISAP Authenticated Encryption with Associated Data
 namespace isap_bench {
 
-// Benchmarks Ascon permutation on CPU based systems, for specified # -of rounds
+// Benchmarks Keccak-p[400] permutation on CPU based systems, for specified #
+// -of rounds
 template<const size_t ROUNDS>
 static void
-ascon_permutation(benchmark::State& state)
+keccak_permutation(benchmark::State& state)
 {
-  uint64_t pstate[5];
-  random_data<uint64_t>(pstate, 5);
+  uint16_t pstate[25];
+  isap_utils::random_data<uint16_t>(pstate, 25);
 
   for (auto _ : state) {
-    ascon::permute<ROUNDS>(pstate);
+    keccak::permute<ROUNDS>(pstate);
 
     benchmark::DoNotOptimize(pstate);
     benchmark::ClobberMemory();

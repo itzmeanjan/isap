@@ -50,4 +50,6 @@ rm LWC_AEAD_KAT_*.txt
 
 popd
 
+make clean
+
 # ---

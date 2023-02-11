@@ -1,9 +1,4 @@
-#include "bench_ascon.hpp"
-#include "bench_isap_a_128.hpp"
-#include "bench_isap_a_128a.hpp"
-#include "bench_isap_k_128.hpp"
-#include "bench_isap_k_128a.hpp"
-#include "bench_keccak.hpp"
+#include "bench/bench_isap.hpp"
 
 // registering Ascon permutation for benchmark
 BENCHMARK(isap_bench::ascon_permutation<1>);
